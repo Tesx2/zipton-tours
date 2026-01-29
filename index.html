@@ -1,0 +1,86 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zipton Tours | Where Adventure Meets Culture</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Authentic Kenyan Safaris and Cultural Experiences. Bridge the gap between heart-pounding exploration and deep cultural immersion.">
+    <meta name="keywords" content="Kenya Safari, Maasai Mara, Cultural Tourism Kenya, Mt Kenya Trek, Lamu Heritage">
+    
+    <!-- Social Media Meta Tags -->
+    <meta property="og:title" content="Zipton Tours - Authentic Kenyan Experiences">
+    <meta property="og:description" content="Go beyond the safari. Connect with the heartbeat of Africa.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&q=80&w=1200">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        zipton: {
+                            brown: '#4a2b1f',
+                            orange: '#f19021',
+                            black: '#000000',
+                            white: '#ffffff',
+                        },
+                        mpesa: '#48B04B'
+                    },
+                    fontFamily: {
+                        montserrat: ['Montserrat', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            scroll-behavior: smooth;
+        }
+        .hero-gradient {
+            background: linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0.2), rgba(0,0,0,0.7));
+        }
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(72, 176, 75, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(72, 176, 75, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(72, 176, 75, 0); }
+        }
+        .animate-pulse-green {
+            animation: pulse-green 2s infinite;
+        }
+        .animate-scale-in {
+            animation: scaleIn 0.3s ease-out;
+        }
+        @keyframes scaleIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.38.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4"
+  }
+}
+</script>
+</head>
+<body class="bg-white text-zipton-black">
+    <div id="root"></div>
+</body>
+</html>
