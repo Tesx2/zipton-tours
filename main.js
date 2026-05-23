@@ -241,3 +241,35 @@ async function loadSinglePost() {
 }
 
 loadSinglePost();
+
+function applyTeamImages() {
+  const teamCards = document.querySelectorAll(".team-card");
+  const placeholderSrc = "images/team/placeholder.jpg";
+
+  teamCards.forEach((card) => {
+    const img = card.querySelector("img");
+    const teamName = card.dataset.teamName?.trim();
+    if (!img || !teamName) return;
+
+    const sanitizedFileName = teamName
+      .toLowerCase()
+      .replace(/[’'`]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+    const jpgPath = `images/team/${sanitizedFileName}.jpg`;
+    const jpegPath = `images/team/${sanitizedFileName}.jpeg`;
+
+    img.src = jpgPath;
+    img.onerror = () => {
+      if (img.src.endsWith(".jpg")) {
+        img.src = jpegPath;
+      } else {
+        img.src = placeholderSrc;
+      }
+      img.onerror = null;
+    };
+  });
+}
+
+applyTeamImages();

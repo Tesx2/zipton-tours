@@ -986,3 +986,14 @@ textarea {
     height: 170px;
   }
 }
+.team-card .social-links img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  display: block;
+  transition: 0.3s ease;
+}
+
+.team-card .social-links img:hover {
+  transform: scale(1.1);
+}
