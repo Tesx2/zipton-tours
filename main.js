@@ -115,8 +115,8 @@ if (year) {
   year.textContent = new Date().getFullYear();
 }
 
-const apiBaseURL = "https://ziptontours.great-site.net/wp-json/wp/v2/posts";
-const apiURL = `${apiBaseURL}?_embed`;
+const apiBaseURL = "/.netlify/functions/wp-posts";
+const apiURL = apiBaseURL;
 
 function stripHTML(value = "") {
   const parser = new DOMParser();
@@ -215,7 +215,7 @@ async function loadSinglePost() {
   }
 
   try {
-    const response = await fetch(`${apiBaseURL}/${postId}?_embed`);
+    const response = await fetch(`${apiBaseURL}?id=${postId}`);
     if (!response.ok) {
       throw new Error(`WordPress API returned ${response.status}`);
     }
