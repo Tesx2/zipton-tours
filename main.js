@@ -103,10 +103,28 @@ const contactForm = document.querySelector("#contact-form");
 const formStatus = document.querySelector("#form-status");
 
 if (contactForm && formStatus) {
-  contactForm.addEventListener("submit", (event) => {
+  contactForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    formStatus.textContent = "Thank you. Your enquiry is ready for frontend integration.";
-    contactForm.reset();
+
+    const data = new FormData(contactForm);
+
+    try {
+      const response = await fetch(contactForm.action || "https://formspree.io/f/xqejlbbq", {
+        method: "POST",
+        body: data,
+        headers: { Accept: "application/json" }
+      });
+
+      if (response.ok) {
+        formStatus.textContent = "✅ Message sent successfully!";
+        contactForm.reset();
+      } else {
+        formStatus.textContent = "❌ Something went wrong. Try again.";
+      }
+    } catch (err) {
+      console.error("Form submit failed:", err);
+      formStatus.textContent = "❌ Something went wrong. Try again.";
+    }
   });
 }
 
