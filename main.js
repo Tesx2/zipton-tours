@@ -342,7 +342,6 @@ function renderTourDetail() {
   const params = new URLSearchParams(window.location.search);
   const slug = params.get("tour") || "classic-safari-trail";
   const tour = tourDetails[slug] || tourDetails["classic-safari-trail"];
-  const whatsappMessage = encodeURIComponent(`Hello Zipton Tours, I would like to pay or reserve the ${tour.title}.`);
 
   document.title = `${tour.title} | Zipton Tours`;
   document.querySelector("#tour-category").textContent = tour.category;
@@ -365,7 +364,11 @@ function renderTourDetail() {
     `)
     .join("");
   document.querySelector("#contact-tour-link").href = `contact.html?tour=${encodeURIComponent(tour.title)}`;
-  document.querySelector("#pay-tour-link").href = `https://wa.me/254710142850?text=${whatsappMessage}`;
+  document.querySelectorAll(".payment-option").forEach((option) => {
+    const method = option.dataset.paymentMethod || "payment";
+    const methodMessage = encodeURIComponent(`Hello Zipton Tours, I would like to reserve the ${tour.title} and pay using ${method}.`);
+    option.href = `https://wa.me/254710142850?text=${methodMessage}`;
+  });
 }
 
 renderTourDetail();
