@@ -780,8 +780,10 @@ h1 {
 
 .payment-option {
   min-height: 48px;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
   padding: 10px;
   color: var(--brown);
   background: var(--soft);
@@ -789,6 +791,42 @@ h1 {
   border-radius: 8px;
   font-weight: 800;
   transition: transform 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+}
+
+.payment-logo {
+  width: 76px;
+  height: 34px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 76px;
+  color: var(--white);
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.mpesa-logo {
+  background: #00a651;
+}
+
+.paypal-logo {
+  color: #003087;
+  background: #ffffff;
+  border: 1px solid #d7e5f5;
+  font-family: Arial, sans-serif;
+  font-style: italic;
+}
+
+.pesapal-logo {
+  background: linear-gradient(135deg, #f58220 0%, #154c8b 100%);
+}
+
+.stripe-logo {
+  background: #635bff;
+  font-family: Arial, sans-serif;
+  font-style: italic;
+  font-size: 0.86rem;
 }
 
 .payment-option:hover {
