@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="View full Zipton Tours trip details, itinerary, inclusions, and booking options.">
+  <title>Tour Details | Zipton Tours</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=5">
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav container" aria-label="Main navigation">
+      <a class="brand" href="index.html"><img src="images/logo-main.png" alt="Zipton Tours"></a>
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button>
+      <div class="nav-menu">
+        <a href="index.html">Home</a>
+        <a href="tours.html" class="active">Tours</a>
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="tour-detail-page">
+    <section class="tour-detail-hero" id="tour-detail-hero">
+      <div class="container tour-detail-hero-content reveal">
+        <a class="text-link back-link" href="tours.html">Back to Tours</a>
+        <p class="eyebrow" id="tour-category">Trip details</p>
+        <h1 id="tour-title">Loading trip details...</h1>
+        <p id="tour-summary">Please wait while we prepare the full tour information.</p>
+        <div class="tour-quick-facts" id="tour-quick-facts" aria-label="Tour quick facts"></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container tour-detail-layout">
+        <article class="tour-detail-main reveal">
+          <div class="tour-detail-image" id="tour-detail-image"></div>
+          <div class="detail-block">
+            <p class="eyebrow">Overview</p>
+            <h2>What to expect</h2>
+            <p id="tour-overview">Tour overview loading.</p>
+          </div>
+          <div class="detail-block">
+            <p class="eyebrow">Trip highlights</p>
+            <h2>Why travelers love this route</h2>
+            <ul class="check-list" id="tour-highlights"></ul>
+          </div>
+          <div class="detail-block">
+            <p class="eyebrow">Itinerary</p>
+            <h2>Day-by-day experience</h2>
+            <div class="itinerary-list" id="tour-itinerary"></div>
+          </div>
+          <div class="detail-block">
+            <p class="eyebrow">Included</p>
+            <h2>What is covered</h2>
+            <ul class="check-list" id="tour-includes"></ul>
+          </div>
+        </article>
+
+        <aside class="booking-panel reveal" aria-label="Booking options">
+          <p class="eyebrow">Ready to travel?</p>
+          <h2 id="booking-title">Book this trip</h2>
+          <p>Choose how you would like to move forward. You can ask questions first or reserve your place directly.</p>
+          <div class="price-box">
+            <span>Starting from</span>
+            <strong id="tour-price">Custom quote</strong>
+          </div>
+          <a class="btn btn-primary" id="contact-tour-link" href="contact.html">Contact to Book</a>
+          <a class="btn btn-dark" id="pay-tour-link" href="https://wa.me/254710142850" target="_blank" rel="noopener">Pay / Reserve</a>
+          <p class="booking-note">Payments and reservations are confirmed directly with Zipton Tours before your travel date.</p>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div><a class="brand footer-brand" href="index.html"><img src="images/logo-for-dark-bg.png" alt="Zipton Tours"></a><p>Premium adventures shaped by culture, comfort, and local connection.</p></div>
+      <div><h3>Explore</h3><a href="index.html">Home</a><a href="tours.html">Tours</a><a href="about.html">About</a><a href="contact.html">Contact</a></div>
+      <div><h3>Contact</h3><p>Email: ziptontours@gmail.com</p><p>Phone: +254 710 142 850</p></div>
+    </div>
+    <div class="footer-bottom container"><p>&copy; <span id="year"></span> Zipton Tours. All rights reserved.</p></div>
+  </footer>
+  <script src="main.js?v=5"></script>
+</body>
+</html>

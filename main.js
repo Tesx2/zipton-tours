@@ -260,6 +260,116 @@ async function loadSinglePost() {
 
 loadSinglePost();
 
+const tourDetails = {
+  "classic-safari-trail": {
+    title: "Classic Safari Trail",
+    category: "5 days · Safari",
+    price: "From KSh 85,000",
+    image: "https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?auto=format&fit=crop&w=1400&q=85",
+    summary: "A wildlife-focused escape designed for travelers who want iconic safari moments, comfortable lodge stays, and expert guiding.",
+    overview: "Follow open savannah routes, track wildlife with experienced guides, and end each day with calm lodge evenings. This trip balances early-morning game drives, scenic rest stops, cultural context, and enough flexibility for photography and quiet time.",
+    facts: ["5 days", "Safari", "Lodge stays", "Private guide"],
+    highlights: ["Morning and evening game drives", "Comfortable lodge accommodation", "Wildlife photography stops", "Sundowner moments in scenic locations"],
+    itinerary: ["Arrival, briefing, and transfer to your safari lodge", "Full-day wildlife drives with picnic or lodge lunch", "Guided cultural stop and afternoon game viewing", "Slow morning drive, relaxation, and sunset experience", "Final breakfast, scenic transfer, and departure"],
+    includes: ["Transport during the tour", "Professional local guide", "Accommodation planning support", "Park and activity guidance", "Pre-trip consultation"]
+  },
+  "highland-culture-route": {
+    title: "Highland Culture Route",
+    category: "7 days · Culture",
+    price: "From KSh 95,000",
+    image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1400&q=85",
+    summary: "A deeper cultural route through highland landscapes, local markets, heritage stories, village visits, and scenic walking experiences.",
+    overview: "This journey is shaped for guests who want to understand the people and rhythms behind the landscape. Expect thoughtful community encounters, slow scenic drives, guided walks, and meals that connect you with place.",
+    facts: ["7 days", "Culture", "Scenic drives", "Community hosts"],
+    highlights: ["Guided market and village visits", "Storytelling with local hosts", "Highland viewpoints and gentle hikes", "Traditional food experiences"],
+    itinerary: ["Welcome briefing and highland transfer", "Market walk and local lunch experience", "Village visit and heritage storytelling", "Scenic hike and photography afternoon", "Community craft or cooking session", "Restful day with optional nature walk", "Return transfer and departure"],
+    includes: ["Route planning", "Local guide coordination", "Cultural experience facilitation", "Transport support", "Accommodation recommendations"]
+  },
+  "coastal-heritage-stay": {
+    title: "Coastal Heritage Stay",
+    category: "4 days · Coast",
+    price: "From KSh 68,000",
+    image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1400&q=85",
+    summary: "A relaxed coastal escape mixing beach calm, Swahili heritage, seafood dining, spice stories, and old-town architecture.",
+    overview: "Made for travelers who want both rest and meaning, this stay blends ocean time with guided heritage experiences. Enjoy slow mornings, cultural walks, coastal cuisine, and warm evenings by the water.",
+    facts: ["4 days", "Coast", "Heritage walks", "Beach stay"],
+    highlights: ["Swahili architecture and heritage walks", "Beach relaxation and coastal dining", "Spice and seafood experiences", "Optional dhow or sunset activity"],
+    itinerary: ["Arrival and transfer to coastal stay", "Heritage walk and local dining experience", "Beach day with optional water activity", "Breakfast, final coastal stop, and departure"],
+    includes: ["Coastal itinerary planning", "Local guide coordination", "Restaurant and activity recommendations", "Transport guidance", "Guest support before travel"]
+  },
+  "market-makers-weekend": {
+    title: "Market & Makers Weekend",
+    category: "3 days · Immersion",
+    price: "From KSh 38,000",
+    image: "https://images.unsplash.com/photo-1523805009345-7448845a9e53?auto=format&fit=crop&w=1400&q=85",
+    summary: "A short, culture-rich weekend meeting artisans, tasting local dishes, and exploring the stories behind handmade craft.",
+    overview: "Perfect for guests with limited time, this immersive weekend focuses on local creativity and community-led experiences. Move through markets, workshops, kitchens, and conversations that reveal the texture of a destination.",
+    facts: ["3 days", "Culture", "Food", "Craft"],
+    highlights: ["Guided market visit", "Artisan workshop experience", "Local food tasting", "Small-group cultural storytelling"],
+    itinerary: ["Arrival, welcome, and local food introduction", "Market walk, maker visit, and craft session", "Slow breakfast, final cultural stop, and departure"],
+    includes: ["Experience coordination", "Local host support", "Workshop planning", "Transport guidance", "Pre-trip briefing"]
+  },
+  "mountain-valley-trek": {
+    title: "Mountain & Valley Trek",
+    category: "6 days · Adventure",
+    price: "From KSh 78,000",
+    image: "https://images.unsplash.com/photo-1533240332313-0db49b459ad6?auto=format&fit=crop&w=1400&q=85",
+    summary: "A scenic adventure for active travelers who want guided trails, panoramic viewpoints, forest paths, and restful evenings.",
+    overview: "This trek combines movement and comfort. Days are built around guided walking routes, landscape interpretation, and recovery time, making it ideal for travelers who want adventure without losing care and pace.",
+    facts: ["6 days", "Adventure", "Guided trails", "Nature"],
+    highlights: ["Guided mountain and valley walks", "Panoramic viewpoints", "Forest and rural trail sections", "Comfortable recovery evenings"],
+    itinerary: ["Arrival, route briefing, and acclimatization walk", "Valley trail and scenic picnic", "Forest route with local guide", "Mountain viewpoint day", "Flexible nature day or cultural stop", "Departure transfer"],
+    includes: ["Guided trekking support", "Route planning", "Safety briefing", "Accommodation recommendations", "Transport guidance"]
+  },
+  "private-bespoke-journey": {
+    title: "Private Bespoke Journey",
+    category: "Custom · Private",
+    price: "Custom quote",
+    image: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1400&q=85",
+    summary: "A private route built around your dates, budget, pace, interests, and preferred travel style.",
+    overview: "This option is for travelers who want Zipton Tours to design a custom experience from scratch. We shape the route around your group, whether you want safari, culture, coast, hiking, food, photography, or a bit of everything.",
+    facts: ["Custom length", "Private", "Flexible", "Tailored"],
+    highlights: ["Built around your dates and budget", "Flexible accommodation style", "Private guide and transport options", "Safari, culture, coast, or adventure combinations"],
+    itinerary: ["Discovery call and travel brief", "Custom route proposal", "Refinement based on your feedback", "Booking support and pre-trip briefing", "On-trip coordination and guest care"],
+    includes: ["Custom itinerary design", "Supplier and guide coordination", "Budget planning support", "Booking guidance", "Dedicated communication before travel"]
+  }
+};
+
+function renderTourDetail() {
+  const page = document.querySelector(".tour-detail-page");
+  if (!page) return;
+
+  const params = new URLSearchParams(window.location.search);
+  const slug = params.get("tour") || "classic-safari-trail";
+  const tour = tourDetails[slug] || tourDetails["classic-safari-trail"];
+  const whatsappMessage = encodeURIComponent(`Hello Zipton Tours, I would like to pay or reserve the ${tour.title}.`);
+
+  document.title = `${tour.title} | Zipton Tours`;
+  document.querySelector("#tour-category").textContent = tour.category;
+  document.querySelector("#tour-title").textContent = tour.title;
+  document.querySelector("#tour-summary").textContent = tour.summary;
+  document.querySelector("#tour-overview").textContent = tour.overview;
+  document.querySelector("#tour-price").textContent = tour.price;
+  document.querySelector("#booking-title").textContent = `Book ${tour.title}`;
+  document.querySelector("#tour-detail-hero").style.backgroundImage = `linear-gradient(90deg, rgba(0, 0, 0, 0.82), rgba(74, 43, 31, 0.62)), url("${tour.image}")`;
+  document.querySelector("#tour-detail-image").innerHTML = `<img src="${tour.image}" alt="${tour.title}">`;
+  document.querySelector("#tour-quick-facts").innerHTML = tour.facts.map((fact) => `<span>${fact}</span>`).join("");
+  document.querySelector("#tour-highlights").innerHTML = tour.highlights.map((item) => `<li>${item}</li>`).join("");
+  document.querySelector("#tour-includes").innerHTML = tour.includes.map((item) => `<li>${item}</li>`).join("");
+  document.querySelector("#tour-itinerary").innerHTML = tour.itinerary
+    .map((item, index) => `
+      <div class="itinerary-item">
+        <span>Day ${index + 1}</span>
+        <p>${item}</p>
+      </div>
+    `)
+    .join("");
+  document.querySelector("#contact-tour-link").href = `contact.html?tour=${encodeURIComponent(tour.title)}`;
+  document.querySelector("#pay-tour-link").href = `https://wa.me/254710142850?text=${whatsappMessage}`;
+}
+
+renderTourDetail();
+
 function applyTeamImages() {
   const teamCards = document.querySelectorAll(".team-card");
   const placeholderSrc = "images/team/placeholder.jpg";
