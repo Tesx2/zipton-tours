@@ -774,7 +774,7 @@ h1 {
 
 .payment-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -782,8 +782,7 @@ h1 {
   min-height: 54px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: center;
   padding: 10px;
   color: var(--brown);
   background: var(--soft);
@@ -794,22 +793,16 @@ h1 {
 }
 
 .payment-logo {
-  width: 86px;
+  width: 92px;
   height: 34px;
   display: inline-grid;
   place-items: center;
-  flex: 0 0 86px;
+  flex: 0 0 auto;
   color: var(--white);
   border-radius: 8px;
   font-size: 0.78rem;
   font-weight: 800;
   line-height: 1;
-}
-
-.payment-label {
-  min-width: 0;
-  overflow-wrap: anywhere;
-  text-align: right;
 }
 
 .mpesa-logo {

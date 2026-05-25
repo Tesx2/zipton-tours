@@ -372,9 +372,8 @@ function renderTourDetail() {
       option.href = "#";
       option.addEventListener("click", async (event) => {
         event.preventDefault();
-        const label = option.querySelector(".payment-label");
         option.classList.add("loading");
-        if (label) label.textContent = "Opening Stripe...";
+        option.setAttribute("aria-label", "Opening Stripe Checkout");
 
         try {
           const response = await fetch("/.netlify/functions/create-stripe-checkout", {
@@ -394,7 +393,7 @@ function renderTourDetail() {
         } catch (error) {
           console.error("Stripe Checkout failed:", error);
           option.classList.remove("loading");
-          if (label) label.textContent = "Stripe";
+          option.setAttribute("aria-label", "Pay with Stripe");
           alert("Stripe Checkout is not ready yet. Please contact Zipton Tours to reserve.");
         }
       });
