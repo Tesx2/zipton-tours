@@ -400,12 +400,89 @@ function renderTourDetail() {
       return;
     }
 
+    if (method === "M-Pesa") {
+      option.href = "#";
+      option.addEventListener("click", (event) => {
+        event.preventDefault();
+        openMpesaModal(tour, selectedSlug);
+      });
+      return;
+    }
+
     const methodMessage = encodeURIComponent(`Hello Zipton Tours, I would like to reserve the ${tour.title} and pay using ${method}.`);
     option.href = `https://wa.me/254710142850?text=${methodMessage}`;
   });
 }
 
 renderTourDetail();
+
+function openMpesaModal(tour, tourSlug) {
+  const modal = document.querySelector("#mpesa-modal");
+  const form = document.querySelector("#mpesa-form");
+  const status = document.querySelector("#mpesa-status");
+  const title = document.querySelector("#mpesa-modal-title");
+  const input = document.querySelector("#mpesa-phone");
+
+  if (!modal || !form || !status || !title || !input) return;
+
+  title.textContent = `Pay for ${tour.title}`;
+  status.textContent = "";
+  form.dataset.tour = tourSlug;
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+  input.focus();
+}
+
+function closeMpesaModal() {
+  const modal = document.querySelector("#mpesa-modal");
+  if (!modal) return;
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
+}
+
+document.querySelectorAll("[data-close-mpesa]").forEach((button) => {
+  button.addEventListener("click", closeMpesaModal);
+});
+
+const mpesaForm = document.querySelector("#mpesa-form");
+const mpesaStatus = document.querySelector("#mpesa-status");
+
+if (mpesaForm && mpesaStatus) {
+  mpesaForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const submitButton = mpesaForm.querySelector("button[type='submit']");
+    const phone = new FormData(mpesaForm).get("phone");
+
+    mpesaStatus.textContent = "Sending STK Push...";
+    submitButton.disabled = true;
+
+    try {
+      const response = await fetch("/.netlify/functions/create-mpesa-stk", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          phone,
+          tour: mpesaForm.dataset.tour
+        })
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "M-Pesa STK Push failed.");
+      }
+
+      mpesaStatus.textContent = data.message || "STK Push sent. Check your phone.";
+      mpesaForm.reset();
+    } catch (error) {
+      console.error("M-Pesa STK Push failed:", error);
+      mpesaStatus.textContent = error.message || "M-Pesa STK Push failed. Please try again.";
+    } finally {
+      submitButton.disabled = false;
+    }
+  });
+}
 
 function applyTeamImages() {
   const teamCards = document.querySelectorAll(".team-card");

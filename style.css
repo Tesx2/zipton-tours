@@ -865,6 +865,69 @@ h1 {
   color: rgba(74, 43, 31, 0.78);
 }
 
+.payment-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.payment-modal.open {
+  display: flex;
+}
+
+.payment-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.58);
+}
+
+.payment-modal-card {
+  position: relative;
+  width: min(100%, 480px);
+  padding: 28px;
+  background: var(--white);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.payment-modal-card h2 {
+  margin-bottom: 12px;
+  font-size: 2rem;
+}
+
+.payment-modal-card p:not(.eyebrow) {
+  color: rgba(74, 43, 31, 0.78);
+}
+
+.modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 50%;
+  color: var(--white);
+  background: var(--brown);
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+
+.mpesa-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.mpesa-form .btn:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
 .inner-hero {
   padding: 96px 0 72px;
   color: var(--white);

@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=6">
+  <link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
   <header class="site-header">
@@ -91,6 +91,22 @@
         </aside>
       </div>
     </section>
+
+    <div class="payment-modal" id="mpesa-modal" aria-hidden="true">
+      <div class="payment-modal-backdrop" data-close-mpesa></div>
+      <section class="payment-modal-card" role="dialog" aria-modal="true" aria-labelledby="mpesa-modal-title">
+        <button class="modal-close" type="button" data-close-mpesa aria-label="Close M-Pesa payment">×</button>
+        <p class="eyebrow">M-Pesa STK Push</p>
+        <h2 id="mpesa-modal-title">Pay with M-Pesa</h2>
+        <p>Enter your M-Pesa phone number. You will receive a prompt on your phone to enter your PIN and complete the reservation payment.</p>
+        <form id="mpesa-form" class="mpesa-form">
+          <label for="mpesa-phone">M-Pesa phone number</label>
+          <input type="tel" id="mpesa-phone" name="phone" placeholder="0710 142 850" required>
+          <button class="btn btn-primary" type="submit">Send STK Push</button>
+          <p class="form-status" id="mpesa-status" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+    </div>
   </main>
 
   <footer class="site-footer">
@@ -101,6 +117,6 @@
     </div>
     <div class="footer-bottom container"><p>&copy; <span id="year"></span> Zipton Tours. All rights reserved.</p></div>
   </footer>
-  <script src="main.js?v=6"></script>
+  <script src="main.js?v=7"></script>
 </body>
 </html>
