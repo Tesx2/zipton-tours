@@ -797,6 +797,37 @@ h1 {
   border-color: var(--orange);
 }
 
+.payment-option.loading {
+  pointer-events: none;
+  opacity: 0.72;
+}
+
+.payment-status-section {
+  min-height: 68vh;
+  display: grid;
+  align-items: center;
+  background: var(--soft);
+}
+
+.payment-status-card {
+  max-width: 820px;
+  padding: 34px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.payment-status-card h1 {
+  margin-bottom: 18px;
+  font-size: clamp(2.4rem, 8vw, 4.8rem);
+}
+
+.payment-status-card p:not(.eyebrow) {
+  max-width: 680px;
+  color: rgba(74, 43, 31, 0.78);
+}
+
 .inner-hero {
   padding: 96px 0 72px;
   color: var(--white);

@@ -342,6 +342,7 @@ function renderTourDetail() {
   const params = new URLSearchParams(window.location.search);
   const slug = params.get("tour") || "classic-safari-trail";
   const tour = tourDetails[slug] || tourDetails["classic-safari-trail"];
+  const selectedSlug = tourDetails[slug] ? slug : "classic-safari-trail";
 
   document.title = `${tour.title} | Zipton Tours`;
   document.querySelector("#tour-category").textContent = tour.category;
@@ -366,6 +367,39 @@ function renderTourDetail() {
   document.querySelector("#contact-tour-link").href = `contact.html?tour=${encodeURIComponent(tour.title)}`;
   document.querySelectorAll(".payment-option").forEach((option) => {
     const method = option.dataset.paymentMethod || "payment";
+
+    if (method === "Stripe") {
+      option.href = "#";
+      option.addEventListener("click", async (event) => {
+        event.preventDefault();
+        option.classList.add("loading");
+        option.querySelector("span").textContent = "Opening Stripe...";
+
+        try {
+          const response = await fetch("/.netlify/functions/create-stripe-checkout", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ tour: selectedSlug })
+          });
+          const data = await response.json();
+
+          if (!response.ok || !data.url) {
+            throw new Error(data.message || "Stripe Checkout could not be opened.");
+          }
+
+          window.location.href = data.url;
+        } catch (error) {
+          console.error("Stripe Checkout failed:", error);
+          option.classList.remove("loading");
+          option.querySelector("span").textContent = "Stripe";
+          alert("Stripe Checkout is not ready yet. Please contact Zipton Tours to reserve.");
+        }
+      });
+      return;
+    }
+
     const methodMessage = encodeURIComponent(`Hello Zipton Tours, I would like to reserve the ${tour.title} and pay using ${method}.`);
     option.href = `https://wa.me/254710142850?text=${methodMessage}`;
   });
