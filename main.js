@@ -409,6 +409,38 @@ function renderTourDetail() {
       return;
     }
 
+    if (method === "PayPal") {
+      option.href = "#";
+      option.addEventListener("click", async (event) => {
+        event.preventDefault();
+        option.classList.add("loading");
+        option.setAttribute("aria-label", "Opening PayPal Checkout");
+
+        try {
+          const response = await fetch("/.netlify/functions/create-paypal-order", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ tour: selectedSlug })
+          });
+          const data = await response.json();
+
+          if (!response.ok || !data.url) {
+            throw new Error(data.message || "PayPal Checkout could not be opened.");
+          }
+
+          window.location.href = data.url;
+        } catch (error) {
+          console.error("PayPal Checkout failed:", error);
+          option.classList.remove("loading");
+          option.setAttribute("aria-label", "Pay with PayPal");
+          alert("PayPal Checkout is not ready yet. Please contact Zipton Tours to reserve.");
+        }
+      });
+      return;
+    }
+
     const methodMessage = encodeURIComponent(`Hello Zipton Tours, I would like to reserve the ${tour.title} and pay using ${method}.`);
     option.href = `https://wa.me/254710142850?text=${methodMessage}`;
   });
@@ -515,3 +547,43 @@ function applyTeamImages() {
 }
 
 applyTeamImages();
+
+async function capturePayPalReturn() {
+  const title = document.querySelector("#paypal-status-title");
+  const copy = document.querySelector("#paypal-status-copy");
+  if (!title || !copy) return;
+
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get("token");
+
+  if (!token) {
+    title.textContent = "PayPal payment not completed";
+    copy.textContent = "We could not find a PayPal order token. Please return to the tour page and try again.";
+    return;
+  }
+
+  try {
+    const response = await fetch("/.netlify/functions/capture-paypal-order", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ orderID: token })
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "PayPal capture failed.");
+    }
+
+    title.textContent = "PayPal payment received";
+    copy.textContent = "Thank you. Your PayPal reservation payment has been captured successfully. Zipton Tours will confirm the trip details directly.";
+    document.title = "PayPal Payment Successful | Zipton Tours";
+  } catch (error) {
+    console.error("PayPal capture failed:", error);
+    title.textContent = "PayPal payment needs attention";
+    copy.textContent = error.message || "We could not confirm this PayPal payment. Please contact Zipton Tours with your PayPal receipt.";
+  }
+}
+
+capturePayPalReturn();
