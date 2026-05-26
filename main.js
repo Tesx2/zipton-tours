@@ -135,7 +135,7 @@ if (year) {
 
 const apiBaseURL = "/.netlify/functions/wp-posts";
 const apiURL = apiBaseURL;
-const toursApiURL = "/.netlify/functions/wp-tours";
+const toursApiURL = "https://ziptontour.netlify.app/.netlify/functions/wp-tours";
 
 function stripHTML(value = "") {
   const parser = new DOMParser();
@@ -390,8 +390,13 @@ function parseTourContentSections(html = "") {
       return;
     }
 
-    const text = stripHTML(element.innerHTML).trim();
-    if (text) sections[currentSection].push(text);
+    const lines = element.innerHTML
+      .replace(/<br\s*\/?>/gi, "\n")
+      .split(/\r?\n/)
+      .map((line) => stripHTML(line).trim())
+      .filter(Boolean);
+
+    sections[currentSection].push(...lines);
   });
 
   return sections;
@@ -404,13 +409,20 @@ function getLabeledContentValue(html = "", labels = []) {
   const elements = [...documentValue.body.querySelectorAll("p, li")];
 
   for (const element of elements) {
-    const text = stripHTML(element.innerHTML).trim();
-    const match = text.match(/^([^:]+):\s*(.+)$/);
-    if (!match) continue;
+    const text = element.innerHTML
+      .replace(/<br\s*\/?>/gi, "\n")
+      .split(/\r?\n/)
+      .map((line) => stripHTML(line).trim())
+      .filter(Boolean);
 
-    const label = match[1].trim().toLowerCase();
-    if (labelSet.includes(label)) {
-      return match[2].trim();
+    for (const line of text) {
+      const match = line.match(/^([^:]+):\s*(.+)$/);
+      if (!match) continue;
+
+      const label = match[1].trim().toLowerCase();
+      if (labelSet.includes(label)) {
+        return match[2].trim();
+      }
     }
   }
 
