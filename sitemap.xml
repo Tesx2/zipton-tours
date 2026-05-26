@@ -4,28 +4,48 @@
 xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
     <url>
-        <loc>https://ziptontour.netlify.app/</loc>
+        <loc>https://ziptontours.great-site.net</loc>
         <priority>1.0</priority>
     </url>
 
     <url>
-        <loc>https://ziptontour.netlify.app/about.html</loc>
+        <loc>https://ziptontours.great-site.net/about.html</loc>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://ziptontour.netlify.app/tours.html</loc>
+        <loc>https://ziptontours.great-site.net/tours.html</loc>
         <priority>0.9</priority>
     </url>
 
     <url>
-        <loc>https://ziptontour.netlify.app/contact.html</loc>
+        <loc>https://ziptontours.great-site.net/tour-detail.html</loc>
+        <priority>0.8</priority>
+    </url>
+
+    <url>
+        <loc>https://ziptontours.great-site.net/contact.html</loc>
+        <priority>0.8</priority>
+    </url>
+
+    <url>
+        <loc>https://ziptontours.great-site.net/single-post.html</loc>
         <priority>0.7</priority>
     </url>
 
     <url>
-        <loc>https://ziptontour.netlify.app/single-post.html</loc>
-        <priority>0.7</priority>
+        <loc>https://ziptontours.great-site.net/payment-success.html</loc>
+        <priority>0.5</priority>
+    </url>
+
+    <url>
+        <loc>https://ziptontours.great-site.net/paypal-return.html</loc>
+        <priority>0.5</priority>
+    </url>
+
+    <url>
+        <loc>https://ziptontours.great-site.net/pesapal-return.html</loc>
+        <priority>0.5</priority>
     </url>
 
 </urlset>
