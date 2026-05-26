@@ -131,7 +131,10 @@ exports.handler = async (event) => {
     }
 
     const isProduction = process.env.MPESA_ENV === "production";
-    const amount = Number(process.env.MPESA_RESERVATION_AMOUNT_KES || (isProduction ? 0 : 1));
+    const amountFromBody = Number(body.amount);
+    const amount = Number.isFinite(amountFromBody) && amountFromBody > 0
+      ? Math.round(amountFromBody)
+      : Number(process.env.MPESA_RESERVATION_AMOUNT_KES || (isProduction ? 0 : 1));
 
     if (!amount || amount < 1) {
       return jsonResponse(500, {

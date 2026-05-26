@@ -22,6 +22,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css?v=9">
+  <link rel="stylesheet" href="booking-premium.css">
 </head>
 <body>
   <header class="site-header">
@@ -40,13 +41,46 @@
   <main>
     <section class="section payment-status-section">
       <div class="container">
-        <article class="payment-status-card reveal">
+        <article class="payment-status-card reveal" id="paypal-status-article">
           <p class="eyebrow">PayPal payment</p>
           <h1 id="paypal-status-title">Completing your payment...</h1>
           <p id="paypal-status-copy">Please wait while we confirm your PayPal reservation payment.</p>
           <div class="hero-actions">
             <a class="btn btn-primary" href="tours.html">Explore Tours</a>
             <a class="btn btn-dark" href="contact.html">Contact Zipton Tours</a>
+          </div>
+
+          <div class="payment-success-view" id="paypal-success-view" style="display:none; padding: 26px 16px;">
+            <div class="success-icon" aria-hidden="true">✓</div>
+            <div class="success-message" id="paypal-success-message">Reservation confirmed</div>
+
+            <div class="confirmation-details">
+              <div class="detail-row">
+                <span class="label">Booking reference</span>
+                <span class="value" id="paypal-success-booking-ref">—</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Tour</span>
+                <span class="value" id="paypal-success-tour-name">—</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Guests</span>
+                <span class="value" id="paypal-success-guests">—</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Duration</span>
+                <span class="value" id="paypal-success-duration">—</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Paid today</span>
+                <span class="value" id="paypal-success-amount-today">—</span>
+              </div>
+            </div>
+
+            <div class="hero-actions" style="justify-content:center; margin-top: 18px;">
+              <a class="btn btn-primary" id="paypal-success-view-booking" href="tours.html">View Booking</a>
+              <a class="btn btn-dark" href="tours.html">Back to Tours</a>
+            </div>
           </div>
         </article>
       </div>

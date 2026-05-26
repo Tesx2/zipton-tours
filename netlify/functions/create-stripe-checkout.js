@@ -102,7 +102,17 @@ exports.handler = async (event) => {
 
     const siteURL = process.env.URL || event.headers.origin || "https://ziptontour.netlify.app";
     const currency = process.env.STRIPE_CURRENCY || "usd";
-    const amount = Number(process.env.STRIPE_RESERVATION_AMOUNT_CENTS || tour.amount);
+    const currencyLower = String(currency || "").toLowerCase();
+
+    const payloadAmount = body.amount != null ? Number(body.amount) : null;
+    let amountMinor = Number(process.env.STRIPE_RESERVATION_AMOUNT_CENTS || tour.amount);
+    // Safety: only convert the UI `body.amount` when Stripe currency is set to KES.
+    if (currencyLower === "kes" && Number.isFinite(payloadAmount) && payloadAmount > 0) {
+      amountMinor = Math.round(payloadAmount * 100);
+    }
+
+    const isDeposit = Boolean(body.isDeposit);
+    const bookingRef = String(body.bookingRef || "");
     const checkout = await createCheckoutSession(
       {
         mode: "payment",
@@ -110,11 +120,14 @@ exports.handler = async (event) => {
         cancel_url: `${siteURL}/tour-detail.html?tour=${tourSlug}`,
         "line_items[0][quantity]": "1",
         "line_items[0][price_data][currency]": currency,
-        "line_items[0][price_data][unit_amount]": String(amount),
+        "line_items[0][price_data][unit_amount]": String(amountMinor),
         "line_items[0][price_data][product_data][name]": tour.name,
-        "line_items[0][price_data][product_data][description]": "Reservation deposit for Zipton Tours.",
+        "line_items[0][price_data][product_data][description]": isDeposit
+          ? "Reservation deposit for Zipton Tours."
+          : "Full payment for Zipton Tours.",
         "metadata[tour]": tourSlug,
-        "metadata[payment_type]": "reservation"
+        "metadata[payment_type]": isDeposit ? "deposit" : "full_payment",
+        "metadata[booking_ref]": bookingRef
       },
       secretKey
     );

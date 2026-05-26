@@ -12,10 +12,13 @@ class PremiumBookingSystem {
     this.currentPaymentMethod = 'mpesa';
     this.bookingSummary = {
       tourName: '',
-      duration: '',
+      tourThumb: '',
+      tourSlug: '',
+      durationDays: null,
       guests: 1,
       totalAmount: 0,
       depositAmount: 0,
+      remainingBalance: 0,
       isDeposit: false
     };
     this.init();
@@ -25,6 +28,8 @@ class PremiumBookingSystem {
     this.setupPaymentModal();
     this.setupPaymentTabs();
     this.setupReservationToggle();
+    this.setupGuestControls();
+    this.setupStripeCardForm();
     this.attachEventListeners();
   }
 
@@ -74,14 +79,82 @@ class PremiumBookingSystem {
       input.addEventListener('change', (e) => {
         this.bookingSummary.isDeposit = e.target.value === 'deposit';
         this.updateBookingSummary();
-        
-        // Show/hide deposit info
-        const depositInfo = document.getElementById('deposit-info');
-        if (depositInfo) {
-          depositInfo.classList.toggle('show', this.bookingSummary.isDeposit);
-        }
       });
     });
+  }
+
+  // Guest count controls in modal header
+  setupGuestControls() {
+    const input = document.getElementById('summary-guests');
+    const decBtn = document.getElementById('guests-decrease');
+    const incBtn = document.getElementById('guests-increase');
+    if (!input || !decBtn || !incBtn) return;
+
+    const min = parseInt(input.min || '1', 10);
+    const max = parseInt(input.max || '10', 10);
+
+    const clamp = (n) => Math.min(max, Math.max(min, n));
+
+    const setGuests = (n) => {
+      const value = clamp(n);
+      input.value = String(value);
+      this.bookingSummary.guests = value;
+      this.updateBookingSummary();
+    };
+
+    decBtn.addEventListener('click', () => {
+      const n = parseInt(input.value || '1', 10);
+      setGuests(n - 1);
+    });
+
+    incBtn.addEventListener('click', () => {
+      const n = parseInt(input.value || '1', 10);
+      setGuests(n + 1);
+    });
+
+    input.addEventListener('input', () => {
+      const n = parseInt(input.value || String(min), 10);
+      if (!Number.isFinite(n)) return;
+      setGuests(n);
+    });
+  }
+
+  // Premium card input masking + card type detection (client-side only)
+  setupStripeCardForm() {
+    const cardNumberInput = document.getElementById('card-number');
+    const expiryInput = document.getElementById('card-expiry');
+    const cvvInput = document.getElementById('card-cvv');
+    const cardTypeBadge = document.getElementById('card-type-badge');
+
+    if (!cardNumberInput || !expiryInput || !cvvInput || !cardTypeBadge) return;
+
+    const updateCardType = (digits) => {
+      const type = this.detectCardType(digits);
+      cardTypeBadge.textContent = `Card: ${type}`;
+    };
+
+    cardNumberInput.addEventListener('input', () => {
+      const digits = String(cardNumberInput.value || '').replace(/\D/g, '').slice(0, 19);
+      cardNumberInput.value = this.formatCardNumber(digits);
+      updateCardType(digits);
+    });
+
+    expiryInput.addEventListener('input', () => {
+      const digits = String(expiryInput.value || '').replace(/\D/g, '').slice(0, 4);
+      expiryInput.value = this.formatExpiry(digits);
+    });
+
+    cvvInput.addEventListener('input', () => {
+      const digits = String(cvvInput.value || '').replace(/\D/g, '').slice(0, 4);
+      cvvInput.value = digits;
+    });
+
+    // Initialize badge from any prefilled values
+    const initialDigits = String(cardNumberInput.value || '').replace(/\D/g, '');
+    if (initialDigits) {
+      cardNumberInput.value = this.formatCardNumber(initialDigits.slice(0, 19));
+      updateCardType(initialDigits);
+    }
   }
 
   // Main event listeners for booking buttons
@@ -137,6 +210,26 @@ class PremiumBookingSystem {
     console.log('🔵 Extracting tour data...');
     this.extractTourData();
 
+    // Sync reservation type from modal toggle state
+    const selectedToggle = document.querySelector('input[name="payment-option"]:checked');
+    if (selectedToggle) {
+      this.bookingSummary.isDeposit = selectedToggle.value === 'deposit';
+      this.updateBookingSummary();
+    }
+
+    // Reset in-modal success state + ensure payment UI is visible
+    const successView = document.getElementById('payment-success-view');
+    if (successView) successView.style.display = 'none';
+    const tabsEl = document.querySelector('.payment-tabs');
+    if (tabsEl) tabsEl.style.display = '';
+    const viewsEl = document.querySelector('.payment-views');
+    if (viewsEl) viewsEl.style.display = '';
+    const paymentViewEls = modal.querySelectorAll('.payment-view');
+    paymentViewEls.forEach((el) => {
+      el.style.display = '';
+    });
+    this.switchPaymentMethod(this.currentPaymentMethod || 'mpesa');
+
     // Show modal with animation
     console.log('🔵 Adding active class to modal');
     modal.classList.add('active');
@@ -167,43 +260,88 @@ class PremiumBookingSystem {
     const tourTitle = document.getElementById('tour-title');
     const tourPrice = document.getElementById('tour-price');
     const tourCategory = document.getElementById('tour-category');
+    const tourThumb = document.querySelector('#tour-detail-image img');
+    const params = new URLSearchParams(window.location.search);
+    this.bookingSummary.tourSlug = params.get('tour') || '';
 
     if (tourTitle) this.bookingSummary.tourName = tourTitle.textContent;
-    if (tourCategory) this.bookingSummary.duration = tourCategory.textContent;
+    if (tourThumb) this.bookingSummary.tourThumb = tourThumb.src;
+
+    if (tourCategory) {
+      const durationText = tourCategory.textContent || '';
+      this.bookingSummary.durationDays = this.parseDaysFromDuration(durationText);
+    }
+
+    const guestsInput = document.getElementById('summary-guests');
+    if (guestsInput) {
+      const n = parseInt(guestsInput.value || '1', 10);
+      if (Number.isFinite(n) && n > 0) this.bookingSummary.guests = n;
+    }
+
     if (tourPrice) {
       const priceText = tourPrice.textContent.replace(/[^0-9,]/g, '');
       this.bookingSummary.totalAmount = parseInt(priceText.replace(/,/g, '')) || 85000;
     }
 
     this.bookingSummary.depositAmount = Math.ceil(this.bookingSummary.totalAmount * 0.2);
+    this.bookingSummary.remainingBalance = Math.max(
+      0,
+      this.bookingSummary.totalAmount - this.bookingSummary.depositAmount
+    );
     this.updateBookingSummary();
   }
 
   // Update booking summary display
   updateBookingSummary() {
-    const summaryAmount = document.getElementById('summary-total-amount');
-    const summaryDeposit = document.getElementById('summary-deposit-amount');
-    const summaryGuests = document.getElementById('summary-guests');
-    const summaryTourName = document.getElementById('summary-tour-name');
-    const summaryDuration = document.getElementById('summary-duration');
+    const fmt = (n) => `KSh ${Number(n || 0).toLocaleString()}`;
 
-    if (summaryTourName) {
-      summaryTourName.textContent = this.bookingSummary.tourName || 'Your Tour';
+    const totalAmountEl = document.getElementById('summary-total-amount');
+    const todayLabelEl = document.getElementById('summary-today-label');
+    const todayAmountEl = document.getElementById('summary-today-amount');
+
+    const tourNameEl = document.getElementById('summary-tour-name');
+    const tourThumbEl = document.getElementById('summary-tour-thumb');
+
+    const guestsCountEl = document.getElementById('summary-guests-count');
+    const durationDaysEl = document.getElementById('summary-duration-days');
+
+    const depositEl = document.getElementById('summary-deposit-amount');
+    const remainingEl = document.getElementById('summary-remaining-balance');
+    const depositInfo = document.getElementById('deposit-info');
+
+    const mpesaAmountEl = document.getElementById('mpesa-amount');
+
+    if (tourNameEl) tourNameEl.textContent = this.bookingSummary.tourName || 'Your Tour';
+    if (tourThumbEl && this.bookingSummary.tourThumb) tourThumbEl.src = this.bookingSummary.tourThumb;
+
+    if (guestsCountEl) {
+      const g = this.bookingSummary.guests || 1;
+      guestsCountEl.textContent = `${g} ${g === 1 ? 'Guest' : 'Guests'}`;
     }
 
-    if (summaryDuration) {
-      summaryDuration.textContent = this.bookingSummary.duration || 'Multiple Days';
+    if (durationDaysEl) {
+      const d = this.bookingSummary.durationDays;
+      durationDaysEl.textContent = d ? `${d} Days` : '- Days';
     }
 
-    if (summaryAmount) {
-      const displayAmount = this.bookingSummary.isDeposit 
-        ? this.bookingSummary.depositAmount 
-        : this.bookingSummary.totalAmount;
-      summaryAmount.textContent = `KSh ${displayAmount.toLocaleString()}`;
+    if (totalAmountEl) totalAmountEl.textContent = fmt(this.bookingSummary.totalAmount);
+
+    if (todayLabelEl) {
+      todayLabelEl.textContent = this.bookingSummary.isDeposit ? 'Deposit Today:' : 'Pay Today:';
     }
 
-    if (this.bookingSummary.isDeposit && summaryDeposit) {
-      summaryDeposit.textContent = `KSh ${this.bookingSummary.depositAmount.toLocaleString()}`;
+    const todayAmount = this.bookingSummary.isDeposit
+      ? this.bookingSummary.depositAmount
+      : this.bookingSummary.totalAmount;
+
+    if (todayAmountEl) todayAmountEl.textContent = fmt(todayAmount);
+    if (mpesaAmountEl) mpesaAmountEl.value = fmt(todayAmount);
+
+    if (depositEl) depositEl.textContent = fmt(this.bookingSummary.depositAmount);
+    if (remainingEl) remainingEl.textContent = fmt(this.bookingSummary.remainingBalance);
+
+    if (depositInfo) {
+      depositInfo.classList.toggle('show', this.bookingSummary.isDeposit);
     }
   }
 
@@ -222,6 +360,70 @@ class PremiumBookingSystem {
     views.forEach(view => {
       view.classList.toggle('active', view.dataset.paymentMethod === method);
     });
+
+    const successView = document.getElementById('payment-success-view');
+    if (successView) successView.style.display = 'none';
+  }
+
+  showPaymentSuccessState({ bookingRef, tourName, durationDays, guests, amountToday, reservationType, paymentMethod }) {
+    const modal = document.getElementById('premium-payment-modal');
+    const successView = document.getElementById('payment-success-view');
+    if (!successView) return;
+
+    const tabsEl = modal ? modal.querySelector('.payment-tabs') : null;
+    const viewsEl = modal ? modal.querySelector('.payment-views') : null;
+    if (tabsEl) tabsEl.style.display = 'none';
+    // Hide all payment panels; show only the success panel.
+    const paymentViewEls = modal ? modal.querySelectorAll('.payment-view') : [];
+    paymentViewEls.forEach((el) => {
+      el.style.display = 'none';
+    });
+
+    // Keep the payment-views layout visible so the in-modal success panel can render.
+
+    successView.style.display = 'block';
+
+    const fmtKSh = (n) => `KSh ${Number(n || 0).toLocaleString()}`;
+
+    const msgEl = document.getElementById('success-message');
+    if (msgEl) {
+      if (reservationType === 'Reserve with Deposit') {
+        msgEl.textContent = 'Reservation secured with deposit';
+      } else {
+        msgEl.textContent = 'Reservation confirmed';
+      }
+    }
+
+    const refEl = document.getElementById('success-booking-ref');
+    if (refEl) refEl.textContent = bookingRef || '—';
+
+    const tourEl = document.getElementById('success-tour-name');
+    if (tourEl) tourEl.textContent = tourName || this.bookingSummary.tourName || '—';
+
+    const guestsEl = document.getElementById('success-guests');
+    if (guestsEl) {
+      const g = guests || 1;
+      guestsEl.textContent = `${g} ${g === 1 ? 'Guest' : 'Guests'}`;
+    }
+
+    const durationEl = document.getElementById('success-duration');
+    if (durationEl) {
+      const d = durationDays || this.bookingSummary.durationDays;
+      durationEl.textContent = d ? `${d} Days` : '—';
+    }
+
+    const amountEl = document.getElementById('success-amount-today');
+    if (amountEl) amountEl.textContent = amountToday != null ? fmtKSh(amountToday) : '—';
+
+    const btnView = document.getElementById('success-view-booking');
+    if (btnView) {
+      btnView.href = `contact.html?bookingRef=${encodeURIComponent(bookingRef || '')}&tour=${encodeURIComponent(
+        tourName || this.bookingSummary.tourName || ''
+      )}`;
+    }
+
+    // Ensure modal close/escape UX stays consistent; we only swap views.
+    document.body.style.overflow = 'hidden';
   }
 
   // Handle M-Pesa payment
@@ -236,12 +438,24 @@ class PremiumBookingSystem {
       return;
     }
 
+    const proceedBtn = document.getElementById('mpesa-proceed-btn');
+    const proceedSpinner = document.getElementById('mpesa-proceed-spinner');
+
+    const amount = this.bookingSummary.isDeposit
+      ? this.bookingSummary.depositAmount
+      : this.bookingSummary.totalAmount;
+
+    if (!amount || amount < 1) {
+      this.showError(statusEl, 'Invalid payment amount');
+      return;
+    }
+
+    if (proceedBtn) proceedBtn.disabled = true;
+    if (proceedSpinner) proceedSpinner.style.display = 'inline-block';
+
     this.showLoading(statusEl, 'Sending STK Push...');
 
     try {
-      const amount = this.bookingSummary.isDeposit 
-        ? this.bookingSummary.depositAmount 
-        : this.bookingSummary.totalAmount;
 
       const response = await fetch('/.netlify/functions/create-mpesa-stk', {
         method: 'POST',
@@ -249,20 +463,35 @@ class PremiumBookingSystem {
         body: JSON.stringify({
           phone: phoneInput.value,
           amount: amount,
-          tour: this.bookingSummary.tourName
+          tour: this.bookingSummary.tourSlug,
+          isDeposit: this.bookingSummary.isDeposit
         })
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        this.showSuccess(statusEl, 'STK Push sent! Check your phone for the prompt.');
+        const bookingRef = this.generateBookingRef();
+        sessionStorage.setItem('ziptonBookingRef', bookingRef);
+        this.showPaymentSuccessState({
+          bookingRef,
+          tourName: this.bookingSummary.tourName,
+          durationDays: this.bookingSummary.durationDays,
+          guests: this.bookingSummary.guests,
+          amountToday: amount,
+          reservationType: this.bookingSummary.isDeposit ? 'Reserve with Deposit' : 'Full Payment',
+          paymentMethod: 'M-Pesa'
+        });
       } else {
         this.showError(statusEl, data.error || 'Payment initiation failed');
+        if (proceedBtn) proceedBtn.disabled = false;
+        if (proceedSpinner) proceedSpinner.style.display = 'none';
       }
     } catch (error) {
       console.error('M-Pesa error:', error);
       this.showError(statusEl, 'Network error. Please try again.');
+      if (proceedBtn) proceedBtn.disabled = false;
+      if (proceedSpinner) proceedSpinner.style.display = 'none';
     }
   }
 
@@ -278,6 +507,29 @@ class PremiumBookingSystem {
       return;
     }
 
+    const expiryInput = form.querySelector('input[name="card-expiry"]');
+    const cvvInput = form.querySelector('input[name="card-cvv"]');
+
+    const expiry = expiryInput ? expiryInput.value : '';
+    const cvv = cvvInput ? cvvInput.value : '';
+
+    if (!expiry || !/^\d{2}\/\d{2}$/.test(expiry)) {
+      this.showError(statusEl, 'Enter a valid expiry date (MM/YY)');
+      return;
+    }
+    if (!cvv || !/^\d{3,4}$/.test(cvv)) {
+      this.showError(statusEl, 'Enter a valid CVV');
+      return;
+    }
+
+    const payBtn = document.getElementById('stripe-pay-btn');
+    const paySpinner = document.getElementById('stripe-pay-spinner');
+    const payText = document.getElementById('stripe-pay-btn-text');
+
+    if (payBtn) payBtn.disabled = true;
+    if (paySpinner) paySpinner.style.display = 'inline-block';
+    if (payText) payText.textContent = 'Redirecting...';
+
     this.showLoading(statusEl, 'Processing payment...');
 
     try {
@@ -292,13 +544,34 @@ class PremiumBookingSystem {
         ? this.bookingSummary.depositAmount 
         : this.bookingSummary.totalAmount;
 
+      const bookingRef = this.generateBookingRef();
+      sessionStorage.setItem('ziptonBookingRef', bookingRef);
+      sessionStorage.setItem(
+        'ziptonBookingData',
+        JSON.stringify({
+          bookingRef,
+          tourName: this.bookingSummary.tourName,
+          tourSlug: this.bookingSummary.tourSlug,
+          durationDays: this.bookingSummary.durationDays,
+          guests: this.bookingSummary.guests,
+          totalAmount: this.bookingSummary.totalAmount,
+          depositAmount: this.bookingSummary.depositAmount,
+          remainingBalance: this.bookingSummary.remainingBalance,
+          reservationType: this.bookingSummary.isDeposit ? 'Reserve with Deposit' : 'Full Payment',
+          amountToday: amount,
+          paymentMethod: 'Stripe Card'
+        })
+      );
+
       const response = await fetch('/.netlify/functions/create-stripe-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           amount: amount,
-          tour: this.bookingSummary.tourName,
-          cardholder: cardholder.value
+          tour: this.bookingSummary.tourSlug,
+          cardholder: cardholder.value,
+          bookingRef: bookingRef,
+          isDeposit: this.bookingSummary.isDeposit
         })
       });
 
@@ -308,26 +581,59 @@ class PremiumBookingSystem {
         window.location.href = data.url;
       } else {
         this.showError(statusEl, data.error || 'Payment failed');
+        if (payBtn) payBtn.disabled = false;
+        if (paySpinner) paySpinner.style.display = 'none';
+        if (payText) payText.textContent = 'Pay Now';
       }
     } catch (error) {
       console.error('Stripe error:', error);
       this.showError(statusEl, 'Payment processing failed');
+      if (payBtn) payBtn.disabled = false;
+      if (paySpinner) paySpinner.style.display = 'none';
+      if (payText) payText.textContent = 'Pay Now';
     }
   }
 
   // Handle PayPal payment
   async handlePayPalPayment() {
+    const paypalBtn = document.getElementById('paypal-payment-btn');
+    const originalText = paypalBtn ? paypalBtn.textContent : '';
     try {
       const amount = this.bookingSummary.isDeposit 
         ? this.bookingSummary.depositAmount 
         : this.bookingSummary.totalAmount;
+
+      const bookingRef = this.generateBookingRef();
+      sessionStorage.setItem('ziptonBookingRef', bookingRef);
+      sessionStorage.setItem(
+        'ziptonBookingData',
+        JSON.stringify({
+          bookingRef,
+          tourName: this.bookingSummary.tourName,
+          tourSlug: this.bookingSummary.tourSlug,
+          durationDays: this.bookingSummary.durationDays,
+          guests: this.bookingSummary.guests,
+          totalAmount: this.bookingSummary.totalAmount,
+          depositAmount: this.bookingSummary.depositAmount,
+          reservationType: this.bookingSummary.isDeposit ? 'Reserve with Deposit' : 'Full Payment',
+          amountToday: amount,
+          paymentMethod: 'PayPal'
+        })
+      );
+
+      if (paypalBtn) {
+        paypalBtn.disabled = true;
+        paypalBtn.textContent = 'Redirecting...';
+      }
 
       const response = await fetch('/.netlify/functions/create-paypal-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           amount: amount,
-          tour: this.bookingSummary.tourName
+          tour: this.bookingSummary.tourSlug,
+          bookingRef: bookingRef,
+          isDeposit: this.bookingSummary.isDeposit
         })
       });
 
@@ -339,6 +645,10 @@ class PremiumBookingSystem {
     } catch (error) {
       console.error('PayPal error:', error);
       alert('PayPal payment initiation failed');
+      if (paypalBtn) {
+        paypalBtn.disabled = false;
+        paypalBtn.textContent = originalText || 'Continue with PayPal';
+      }
     }
   }
 
@@ -349,12 +659,40 @@ class PremiumBookingSystem {
         ? this.bookingSummary.depositAmount 
         : this.bookingSummary.totalAmount;
 
+      const pesapalBtn = document.getElementById('pesapal-payment-btn');
+      const pesapalOriginalText = pesapalBtn ? pesapalBtn.textContent : '';
+
+      const bookingRef = this.generateBookingRef();
+      sessionStorage.setItem('ziptonBookingRef', bookingRef);
+      sessionStorage.setItem(
+        'ziptonBookingData',
+        JSON.stringify({
+          bookingRef,
+          tourName: this.bookingSummary.tourName,
+          tourSlug: this.bookingSummary.tourSlug,
+          durationDays: this.bookingSummary.durationDays,
+          guests: this.bookingSummary.guests,
+          totalAmount: this.bookingSummary.totalAmount,
+          depositAmount: this.bookingSummary.depositAmount,
+          reservationType: this.bookingSummary.isDeposit ? 'Reserve with Deposit' : 'Full Payment',
+          amountToday: amount,
+          paymentMethod: 'PesaPal'
+        })
+      );
+
+      if (pesapalBtn) {
+        pesapalBtn.disabled = true;
+        pesapalBtn.textContent = 'Redirecting...';
+      }
+
       const response = await fetch('/.netlify/functions/create-pesapal-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           amount: amount,
-          tour: this.bookingSummary.tourName
+          tour: this.bookingSummary.tourSlug,
+          bookingRef: bookingRef,
+          isDeposit: this.bookingSummary.isDeposit
         })
       });
 
@@ -366,6 +704,10 @@ class PremiumBookingSystem {
     } catch (error) {
       console.error('PesaPal error:', error);
       alert('PesaPal payment initiation failed');
+      if (pesapalBtn) {
+        pesapalBtn.disabled = false;
+        pesapalBtn.textContent = pesapalOriginalText || 'Continue with PesaPal';
+      }
     }
   }
 
@@ -377,6 +719,39 @@ class PremiumBookingSystem {
 
   validateCard(cardNumber) {
     return /^\d{13,19}$/.test(cardNumber);
+  }
+
+  parseDaysFromDuration(durationText) {
+    // Examples: "6 days · Adventure", "Custom · Private"
+    const match = String(durationText || '').match(/(\d+)\s*days?/i);
+    return match ? parseInt(match[1], 10) : null;
+  }
+
+  detectCardType(digits) {
+    if (!digits) return 'Card';
+    if (/^4/.test(digits)) return 'Visa';
+    if (/^(5[1-5]|2[2-7])/.test(digits)) return 'Mastercard';
+    if (/^(34|37)/.test(digits)) return 'Amex';
+    return 'Card';
+  }
+
+  formatCardNumber(digits) {
+    // Simple grouping for readability
+    const clean = String(digits || '').replace(/\D/g, '').slice(0, 19);
+    const groups = clean.match(/.{1,4}/g) || [];
+    return groups.join(' ');
+  }
+
+  formatExpiry(digits) {
+    const clean = String(digits || '').replace(/\D/g, '').slice(0, 4);
+    if (clean.length <= 2) return clean;
+    return `${clean.slice(0, 2)}/${clean.slice(2)}`;
+  }
+
+  generateBookingRef() {
+    const rand = Math.random().toString(36).slice(2, 7).toUpperCase();
+    const time = Date.now().toString().slice(-5);
+    return `ZT-${time}-${rand}`;
   }
 
   // UI Helper methods

@@ -611,6 +611,48 @@ async function capturePayPalReturn() {
     title.textContent = "PayPal payment received";
     copy.textContent = "Thank you. Your PayPal reservation payment has been captured successfully. Zipton Tours will confirm the trip details directly.";
     document.title = "PayPal Payment Successful | Zipton Tours";
+
+    // Premium success UX inside paypal-return.html
+    try {
+      const ref = sessionStorage.getItem("ziptonBookingRef") || "";
+      const dataStr = sessionStorage.getItem("ziptonBookingData");
+      const data = dataStr ? JSON.parse(dataStr) : {};
+
+      const successView = document.getElementById("paypal-success-view");
+      if (successView) {
+        successView.style.display = "block";
+      }
+
+      const setText = (id, val) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = val || "—";
+      };
+
+      const fmtKSh = (n) => `KSh ${Number(n || 0).toLocaleString()}`;
+
+      setText("paypal-success-booking-ref", ref || data.bookingRef);
+      setText("paypal-success-tour-name", data.tourName);
+      setText("paypal-success-guests", data.guests ? `${data.guests} ${data.guests === 1 ? "Guest" : "Guests"}` : "—");
+      setText("paypal-success-duration", data.durationDays ? `${data.durationDays} Days` : "—");
+      setText("paypal-success-amount-today", data.amountToday != null ? fmtKSh(data.amountToday) : "—");
+
+      const btn = document.getElementById("paypal-success-view-booking");
+      if (btn) {
+        const tour = data.tourSlug || "";
+        btn.href = `contact.html?bookingRef=${encodeURIComponent(ref || data.bookingRef || "")}&tour=${encodeURIComponent(tour)}`;
+      }
+
+      const article = document.getElementById("paypal-status-article");
+      if (article) {
+        const originalTitle = document.getElementById("paypal-status-title");
+        const originalCopy = document.getElementById("paypal-status-copy");
+        if (originalTitle) originalTitle.style.display = "none";
+        if (originalCopy) originalCopy.style.display = "none";
+      }
+    } catch (uiErr) {
+      console.warn("PayPal success UI render failed:", uiErr);
+    }
   } catch (error) {
     console.error("PayPal capture failed:", error);
     title.textContent = "PayPal payment needs attention";

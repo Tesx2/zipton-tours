@@ -102,19 +102,28 @@
           <h2>Complete Your Booking</h2>
           
           <div class="booking-summary-card">
-            <div class="summary-row">
-              <span class="label">Trip:</span>
-              <span class="value" id="summary-tour-name">Loading...</span>
+            <div class="modal-summary-top">
+              <img id="summary-tour-thumb" class="modal-tour-thumb" src="" alt="Tour thumbnail">
+              <div class="modal-summary-top-meta">
+                <div class="modal-summary-tour-name">
+                  <span class="label">Tour:</span>
+                  <span class="value" id="summary-tour-name">Loading...</span>
+                </div>
+
+                <div class="modal-summary-facts" id="summary-guests-duration">
+                  <span id="summary-guests-count">1 Guest</span>
+                  <span class="dot">•</span>
+                  <span id="summary-duration-days">- Days</span>
+                </div>
+
+                <div class="guest-stepper" aria-label="Number of guests">
+                  <button type="button" id="guests-decrease" class="guest-stepper-btn" aria-label="Decrease guests">−</button>
+                  <input type="number" id="summary-guests" value="1" min="1" max="10" inputmode="numeric" aria-label="Guests">
+                  <button type="button" id="guests-increase" class="guest-stepper-btn" aria-label="Increase guests">+</button>
+                </div>
+              </div>
             </div>
-            <div class="summary-row">
-              <span class="label">Duration:</span>
-              <span class="value" id="summary-duration">-</span>
-            </div>
-            <div class="summary-row">
-              <span class="label">Guests:</span>
-              <span class="value"><input type="number" id="summary-guests" value="1" min="1" style="width: 50px; border: none; background: none; text-align: right; font-weight: 800; color: var(--safari-orange);"></span>
-            </div>
-            
+
             <!-- Reservation Toggle -->
             <div class="reservation-toggle" style="margin-top: 16px;">
               <div class="toggle-option">
@@ -123,20 +132,26 @@
               </div>
               <div class="toggle-option">
                 <input type="radio" id="deposit-payment" name="payment-option" value="deposit">
-                <label for="deposit-payment">Reserve with Deposit (20%)</label>
+                <label for="deposit-payment">Reserve with Deposit</label>
               </div>
               <div class="deposit-info" id="deposit-info">
-                <strong>Deposit:</strong> <span id="summary-deposit-amount">KSh 15,000</span><br>
+                <strong>Deposit today:</strong> <span id="summary-deposit-amount">KSh 15,000</span><br>
+                <strong>Remaining balance:</strong> <span id="summary-remaining-balance">KSh 63,000</span><br>
                 <small>Balance due 7 days before travel</small>
               </div>
             </div>
-            
+
             <div class="summary-row" style="margin-top: 16px;">
               <span class="label" style="font-size: 1rem;">Total:</span>
               <span class="value" style="font-size: 1.2rem;" id="summary-total-amount">KSh 85,000</span>
             </div>
-            
-            <div class="secure-indicator">Secure checkout</div>
+
+            <div class="summary-row" style="margin-top: 10px;">
+              <span class="label" style="font-size: 0.95rem;" id="summary-today-label">Pay Today:</span>
+              <span class="value" style="font-size: 1.05rem;" id="summary-today-amount">KSh 85,000</span>
+            </div>
+
+            <div class="secure-indicator">Secure Checkout</div>
           </div>
         </div>
 
@@ -153,14 +168,21 @@
           
           <!-- M-Pesa Payment View -->
           <div class="payment-view active" data-payment-method="mpesa" role="tabpanel">
-            <h3 style="color: var(--warm-brown); margin-bottom: 16px; font-size: 1.1rem;">Pay with M-Pesa STK Push</h3>
-            <p style="color: var(--light-text); margin-bottom: 20px; font-size: 0.9rem;">Enter your M-Pesa phone number. You'll receive a prompt on your phone to enter your PIN.</p>
+            <h3 style="color: var(--warm-brown); margin-bottom: 16px; font-size: 1.1rem;">M-Pesa STK Push</h3>
+            <p style="color: var(--light-text); margin-bottom: 20px; font-size: 0.9rem;">We will send a secure payment prompt to your phone. Approve using your PIN.</p>
             <form id="mpesa-payment-form" class="payment-form">
+              <div class="form-group">
+                <label for="mpesa-amount">Amount</label>
+                <input type="text" id="mpesa-amount" name="amount" readonly value="KSh 85,000">
+              </div>
               <div class="form-group">
                 <label for="mpesa-phone">Phone Number</label>
                 <input type="tel" id="mpesa-phone" name="phone" placeholder="0710 142 850" required>
               </div>
-              <button type="submit" class="btn-submit" style="width: 100%; background: linear-gradient(135deg, var(--safari-orange) 0%, #B86A2C 100%); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 800; cursor: pointer;">Send STK Push</button>
+              <button type="submit" class="btn-submit" id="mpesa-proceed-btn">
+                <span id="mpesa-proceed-btn-text">Proceed</span>
+                <span class="spinner" id="mpesa-proceed-spinner" style="display:none;" aria-hidden="true"></span>
+              </button>
               <p class="form-status" id="mpesa-status" role="status" aria-live="polite"></p>
             </form>
           </div>
@@ -168,43 +190,86 @@
           <!-- Card Payment View -->
           <div class="payment-view" data-payment-method="card" role="tabpanel">
             <h3 style="color: var(--warm-brown); margin-bottom: 16px; font-size: 1.1rem;">Card Payment</h3>
-            <div class="stripe-info">Secure payment powered by Stripe</div>
+            <div class="stripe-info">
+              Secure payment powered by Stripe
+              <span class="card-type-badge" id="card-type-badge">Card: Detecting…</span>
+            </div>
+            <p class="stripe-hint">Your card details are handled securely by Stripe. Zipton Tours does not store sensitive card data.</p>
             <form id="stripe-payment-form" class="payment-form">
               <div class="form-group full-width">
                 <label for="cardholder">Cardholder Name</label>
-                <input type="text" id="cardholder" name="cardholder" placeholder="John Doe" required>
+                <input type="text" id="cardholder" name="cardholder" placeholder="John Doe" autocomplete="cc-name" required>
               </div>
               <div class="form-group full-width">
                 <label for="card-number">Card Number</label>
-                <input type="text" id="card-number" name="card-number" placeholder="4242 4242 4242 4242" maxlength="19" required>
+                <input type="text" id="card-number" name="card-number" placeholder="4242 4242 4242 4242" inputmode="numeric" autocomplete="cc-number" maxlength="19" required>
               </div>
               <div class="card-inputs-grid">
                 <div class="form-group">
                   <label for="card-expiry">Expiry Date</label>
-                  <input type="text" id="card-expiry" name="card-expiry" placeholder="MM/YY" maxlength="5" required>
+                  <input type="text" id="card-expiry" name="card-expiry" placeholder="MM/YY" inputmode="numeric" autocomplete="cc-exp" maxlength="5" required>
                 </div>
                 <div class="form-group">
                   <label for="card-cvv">CVV</label>
-                  <input type="text" id="card-cvv" name="card-cvv" placeholder="123" maxlength="4" required>
+                  <input type="text" id="card-cvv" name="card-cvv" placeholder="123" inputmode="numeric" autocomplete="cc-csc" maxlength="4" required>
                 </div>
               </div>
-              <button type="submit" class="btn-submit" style="width: 100%; background: linear-gradient(135deg, var(--safari-orange) 0%, #B86A2C 100%); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 800; cursor: pointer;">Pay Now</button>
+              <button type="submit" class="btn-submit" id="stripe-pay-btn">
+                <span id="stripe-pay-btn-text">Pay Now</span>
+                <span class="spinner" id="stripe-pay-spinner" style="display:none;" aria-hidden="true"></span>
+              </button>
               <p class="form-status" id="card-status" role="status" aria-live="polite"></p>
             </form>
           </div>
 
           <!-- PayPal Payment View -->
           <div class="payment-view" data-payment-method="paypal" role="tabpanel">
-            <h3 style="color: var(--warm-brown); margin-bottom: 16px; font-size: 1.1rem;">PayPal Checkout</h3>
-            <p style="color: var(--light-text); margin-bottom: 20px; font-size: 0.9rem;">You'll be redirected to PayPal to complete your payment securely.</p>
-            <button id="paypal-payment-btn" type="button">Pay with PayPal</button>
+            <h3 style="color: var(--warm-brown); margin-bottom: 16px; font-size: 1.1rem;">PayPal</h3>
+            <p class="paypal-trust">Secure checkout. You will be redirected to PayPal to complete your reservation securely.</p>
+            <button id="paypal-payment-btn" type="button">Continue with PayPal</button>
+            <p class="secure-mini">🔒 Encrypted connection • Trusted PayPal flow</p>
           </div>
 
           <!-- PesaPal Payment View -->
           <div class="payment-view" data-payment-method="pesapal" role="tabpanel">
-            <h3 style="color: var(--warm-brown); margin-bottom: 16px; font-size: 1.1rem;">PesaPal Payment</h3>
-            <p style="color: var(--light-text); margin-bottom: 20px; font-size: 0.9rem;">Secure payment through PesaPal - Kenya's leading payment platform.</p>
-            <button id="pesapal-payment-btn" type="button">Pay with PesaPal</button>
+            <h3 style="color: var(--warm-brown); margin-bottom: 16px; font-size: 1.1rem;">PesaPal</h3>
+            <p class="pesapal-trust">Pay with PesaPal - Kenya's leading payment platform. Designed for smooth, secure reservations.</p>
+            <button id="pesapal-payment-btn" type="button">Continue with PesaPal</button>
+            <p class="secure-mini">Secure Checkout • Ready for future tokenization</p>
+          </div>
+
+          <!-- Success State (shown for in-modal flows like M-Pesa) -->
+          <div class="payment-success-view" id="payment-success-view" style="display:none;" aria-live="polite">
+            <div class="success-icon" aria-hidden="true">✓</div>
+            <div class="success-message" id="success-message">Reservation confirmed</div>
+
+            <div class="confirmation-details">
+              <div class="detail-row">
+                <span class="label">Booking reference</span>
+                <span class="value" id="success-booking-ref">—</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Tour</span>
+                <span class="value" id="success-tour-name">—</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Guests</span>
+                <span class="value" id="success-guests">—</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Duration</span>
+                <span class="value" id="success-duration">—</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Paid today</span>
+                <span class="value" id="success-amount-today">—</span>
+              </div>
+            </div>
+
+            <div class="hero-actions" style="justify-content:center; margin-top: 18px;">
+              <a class="btn btn-primary" id="success-view-booking" href="tours.html">View Booking</a>
+              <a class="btn btn-dark" id="success-back-to-tours" href="tours.html">Back to Tours</a>
+            </div>
           </div>
 
         </div>

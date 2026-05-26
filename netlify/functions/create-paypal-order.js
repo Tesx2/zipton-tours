@@ -140,7 +140,10 @@ exports.handler = async (event) => {
     const accessToken = await requestPayPalToken(host, clientId, clientSecret);
     const siteURL = process.env.URL || event.headers.origin || "https://ziptontour.netlify.app";
     const currency = process.env.PAYPAL_CURRENCY || "USD";
-    const amount = process.env.PAYPAL_RESERVATION_AMOUNT || "50.00";
+    const amountFromBody = body.amount != null ? String(body.amount) : null;
+    const amount = amountFromBody || process.env.PAYPAL_RESERVATION_AMOUNT || "50.00";
+    const isDeposit = Boolean(body.isDeposit);
+    const bookingRef = String(body.bookingRef || "");
 
     const order = await requestJSON(
       {
@@ -157,7 +160,7 @@ exports.handler = async (event) => {
         purchase_units: [
           {
             reference_id: tourSlug,
-            description: `${tourName} reservation`,
+            description: isDeposit ? `${tourName} deposit reservation` : `${tourName} full reservation`,
             amount: {
               currency_code: currency,
               value: amount
@@ -168,7 +171,7 @@ exports.handler = async (event) => {
           brand_name: "Zipton Tours",
           landing_page: "LOGIN",
           user_action: "PAY_NOW",
-          return_url: `${siteURL}/paypal-return.html?tour=${encodeURIComponent(tourSlug)}`,
+          return_url: `${siteURL}/paypal-return.html?tour=${encodeURIComponent(tourSlug)}&bookingRef=${encodeURIComponent(bookingRef)}`,
           cancel_url: `${siteURL}/tour-detail.html?tour=${encodeURIComponent(tourSlug)}`
         }
       }

@@ -21,6 +21,24 @@
   --shadow-large: 0 20px 60px rgba(45, 24, 16, 0.24);
 }
 
+:root {
+  /* Luxury color palette */
+  --safari-orange: #C97B36;
+  --warm-brown: #4B2E1E;
+  --deep-brown: #2D1810;
+  --cream: #F6F1EA;
+  --soft-beige: #EAE0D6;
+  --gold-accent: #D4A574;
+  --dark-text: #2D1810;
+  --light-text: #6B5344;
+  --border-light: #E8DED2;
+  --success-green: #4CAF50;
+  --error-red: #E53935;
+  --shadow-soft: 0 8px 24px rgba(45, 24, 16, 0.12);
+  --shadow-medium: 0 12px 40px rgba(45, 24, 16, 0.18);
+  --shadow-large: 0 20px 60px rgba(45, 24, 16, 0.24);
+}
+
 /* Booking Sidebar Enhancements */
 .booking-panel {
   background: linear-gradient(135deg, var(--cream) 0%, var(--soft-beige) 100%);
@@ -172,7 +190,7 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%) scale(0.95);
+  transform: translate(-50%, -50%) translateY(10px) scale(0.96);
   max-height: 90vh;
   max-width: 600px;
   width: 100%;
@@ -187,7 +205,7 @@
 }
 
 .payment-modal.animated .payment-modal-card {
-  transform: translate(-50%, -50%) scale(1);
+  transform: translate(-50%, -50%) translateY(0) scale(1);
   opacity: 1;
 }
 
@@ -241,6 +259,99 @@
   border-radius: 12px;
   padding: 20px;
   margin-bottom: 24px;
+}
+
+/* Modal header: thumbnail + facts */
+.modal-summary-top {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.modal-tour-thumb {
+  width: 76px;
+  height: 76px;
+  border-radius: 14px;
+  object-fit: cover;
+  border: 1px solid var(--border-light);
+  box-shadow: 0 10px 28px rgba(45, 24, 16, 0.16);
+  background: var(--soft-beige);
+  flex: 0 0 auto;
+}
+
+.modal-summary-top-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.modal-summary-tour-name .label {
+  color: var(--light-text);
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.modal-summary-tour-name .value {
+  color: var(--warm-brown);
+  font-weight: 900;
+  font-size: 1.15rem;
+  line-height: 1.2;
+}
+
+.modal-summary-facts {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 900;
+  color: var(--warm-brown);
+  flex-wrap: wrap;
+}
+
+.modal-summary-facts .dot {
+  color: var(--gold-accent);
+}
+
+/* Guest stepper */
+.guest-stepper {
+  margin-top: 14px;
+  padding: 10px 12px;
+  background: rgba(246, 241, 234, 0.9);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.guest-stepper-btn {
+  width: 34px;
+  height: 34px;
+  border: 2px solid rgba(201, 123, 54, 0.25);
+  background: var(--cream);
+  border-radius: 10px;
+  color: var(--warm-brown);
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.guest-stepper-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(201, 123, 54, 0.6);
+  background: var(--soft-beige);
+}
+
+.guest-stepper input {
+  width: 56px;
+  border: none;
+  background: transparent;
+  outline: none;
+  text-align: center;
+  font-weight: 900;
+  color: var(--safari-orange);
+  font-size: 1rem;
 }
 
 .summary-row {
@@ -422,6 +533,10 @@
   font-weight: 800;
   cursor: pointer;
   border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
   transition: all 0.3s ease;
 }
 
@@ -431,6 +546,26 @@
 }
 
 /* Card Payment Form */
+#stripe-payment-form .btn-submit {
+  background: linear-gradient(135deg, var(--safari-orange) 0%, #B86A2C 100%);
+  color: var(--white);
+  border: none;
+  min-height: 48px;
+  font-weight: 800;
+  cursor: pointer;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: all 0.3s ease;
+}
+
+#stripe-payment-form .btn-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-medium);
+}
+
 .card-inputs-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -474,20 +609,42 @@
   align-items: center;
   gap: 10px;
   cursor: pointer;
+  position: relative;
 }
 
 .toggle-option input[type="radio"] {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-  accent-color: var(--safari-orange);
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .toggle-option label {
   margin: 0;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--warm-brown);
+  padding-left: 28px;
+  position: relative;
+}
+
+.toggle-option label::before {
+  content: '○';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: rgba(75, 46, 30, 0.55);
+}
+
+.toggle-option input[type="radio"]:checked + label::before {
+  content: '●';
+  color: var(--safari-orange);
 }
 
 .toggle-description {
@@ -553,6 +710,36 @@
 .stripe-info::before {
   content: '🔒';
   font-size: 1.2rem;
+}
+
+/* Stripe helpers + premium badges */
+.stripe-hint {
+  margin-top: -10px;
+  margin-bottom: 18px;
+  color: var(--light-text);
+  font-size: 0.9rem;
+}
+
+.card-type-badge {
+  margin-left: auto;
+  color: var(--safari-orange);
+  font-weight: 900;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.secure-mini {
+  margin-top: 14px;
+  color: rgba(75, 46, 30, 0.75);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.paypal-trust,
+.pesapal-trust {
+  color: var(--light-text);
+  margin-bottom: 16px;
+  font-size: 0.9rem;
 }
 
 /* PesaPal Section */
@@ -630,6 +817,7 @@
 .payment-success-view {
   text-align: center;
   padding: 40px 32px;
+  display: none;
 }
 
 .success-icon {

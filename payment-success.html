@@ -22,6 +22,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css?v=8">
+  <link rel="stylesheet" href="booking-premium.css">
 </head>
 <body>
   <header class="site-header">
@@ -41,12 +42,37 @@
     <section class="section payment-status-section">
       <div class="container">
         <article class="payment-status-card reveal">
-          <p class="eyebrow">Payment received</p>
-          <h1>Thank you for reserving with Zipton Tours.</h1>
-          <p>Your Stripe payment was completed successfully. Our team will confirm your reservation details and next steps directly.</p>
-          <div class="hero-actions">
-            <a class="btn btn-primary" href="tours.html">Explore More Tours</a>
-            <a class="btn btn-dark" href="contact.html">Contact Zipton Tours</a>
+          <div class="payment-success-view" id="payment-success-view-page" style="display:block;">
+            <div class="success-icon" aria-hidden="true">✓</div>
+            <div class="success-message" id="success-message-page">Reservation confirmed</div>
+
+            <div class="confirmation-details">
+              <div class="detail-row">
+                <span class="label">Booking reference</span>
+                <span class="value" id="success-booking-ref-page">—</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Tour</span>
+                <span class="value" id="success-tour-name-page">—</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Guests</span>
+                <span class="value" id="success-guests-page">—</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Duration</span>
+                <span class="value" id="success-duration-page">—</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Paid today</span>
+                <span class="value" id="success-amount-today-page">—</span>
+              </div>
+            </div>
+
+            <div class="hero-actions" style="justify-content:center; margin-top: 18px;">
+              <a class="btn btn-primary" id="success-view-booking-page" href="tours.html">View Booking</a>
+              <a class="btn btn-dark" href="tours.html">Back to Tours</a>
+            </div>
           </div>
         </article>
       </div>
@@ -62,5 +88,33 @@
     <div class="footer-bottom container"><p>&copy; <span id="year"></span> Zipton Tours. All rights reserved.</p></div>
   </footer>
   <script src="main.js?v=8"></script>
+  <script>
+    (function () {
+      const ref = sessionStorage.getItem('ziptonBookingRef') || '';
+      const dataStr = sessionStorage.getItem('ziptonBookingData');
+      let data = {};
+      try { data = dataStr ? JSON.parse(dataStr) : {}; } catch (e) { data = {}; }
+
+      const fmtKSh = (n) => `KSh ${Number(n || 0).toLocaleString()}`;
+
+      const setText = (id, val) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = val || '—';
+      };
+
+      setText('success-booking-ref-page', ref || data.bookingRef);
+      setText('success-tour-name-page', data.tourName);
+      setText('success-guests-page', data.guests ? `${data.guests} ${data.guests === 1 ? 'Guest' : 'Guests'}` : '');
+      setText('success-duration-page', data.durationDays ? `${data.durationDays} Days` : '');
+      setText('success-amount-today-page', data.amountToday != null ? fmtKSh(data.amountToday) : '');
+
+      const btn = document.getElementById('success-view-booking-page');
+      if (btn) {
+        const tour = data.tourSlug || '';
+        btn.href = `contact.html?bookingRef=${encodeURIComponent(ref || data.bookingRef || '')}&tour=${encodeURIComponent(tour)}`;
+      }
+    })();
+  </script>
 </body>
 </html>

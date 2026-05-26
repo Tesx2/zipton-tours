@@ -159,7 +159,12 @@ exports.handler = async (event) => {
     const token = await getAccessToken(host, basePath);
     const notificationID = await registerIPN(host, basePath, token, siteURL);
     const currency = process.env.PESAPAL_CURRENCY || "KES";
-    const amount = Number(process.env.PESAPAL_RESERVATION_AMOUNT || 5000);
+    const amountFromBody = Number(body.amount);
+    const amount = Number.isFinite(amountFromBody) && amountFromBody > 0
+      ? Math.round(amountFromBody)
+      : Number(process.env.PESAPAL_RESERVATION_AMOUNT || 5000);
+    const isDeposit = Boolean(body.isDeposit);
+    const bookingRef = String(body.bookingRef || "");
     const reference = `ZT-${tourSlug}-${Date.now()}`.slice(0, 50);
 
     const order = await requestJSON(
@@ -176,8 +181,10 @@ exports.handler = async (event) => {
         id: reference,
         currency,
         amount,
-        description: `${tourName} reservation`,
-        callback_url: `${siteURL}/pesapal-return.html?tour=${encodeURIComponent(tourSlug)}`,
+        description: isDeposit ? `${tourName} deposit reservation` : `${tourName} full reservation`,
+        callback_url: `${siteURL}/pesapal-return.html?tour=${encodeURIComponent(tourSlug)}&bookingRef=${encodeURIComponent(
+          bookingRef
+        )}`,
         notification_id: notificationID,
         billing_address: {
           email_address: process.env.PESAPAL_CUSTOMER_EMAIL || "ziptontours@gmail.com",
