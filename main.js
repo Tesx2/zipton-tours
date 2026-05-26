@@ -135,6 +135,7 @@ if (year) {
 
 const apiBaseURL = "/.netlify/functions/wp-posts";
 const apiURL = apiBaseURL;
+const toursApiURL = "/.netlify/functions/wp-tours";
 
 function stripHTML(value = "") {
   const parser = new DOMParser();
@@ -335,14 +336,171 @@ const tourDetails = {
   }
 };
 
-function renderTourDetail() {
-  const page = document.querySelector(".tour-detail-page");
-  if (!page) return;
+function toList(value) {
+  if (Array.isArray(value)) return value.filter(Boolean);
+  if (!value) return [];
+  return String(value)
+    .split(/\r?\n|,/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
 
-  const params = new URLSearchParams(window.location.search);
-  const slug = params.get("tour") || "classic-safari-trail";
-  const tour = tourDetails[slug] || tourDetails["classic-safari-trail"];
-  const selectedSlug = tourDetails[slug] ? slug : "classic-safari-trail";
+function getField(post, names) {
+  const sources = [post?.acf, post?.meta, post];
+  for (const source of sources) {
+    if (!source) continue;
+    for (const name of names) {
+      const value = source[name];
+      if (value !== undefined && value !== null && value !== "") {
+        return value;
+      }
+    }
+  }
+  return "";
+}
+
+function parseTourContentSections(html = "") {
+  const parser = new DOMParser();
+  const documentValue = parser.parseFromString(sanitizePostContent(html), "text/html");
+  const sections = {};
+  let currentSection = "";
+
+  [...documentValue.body.children].forEach((element) => {
+    const tagName = element.tagName.toLowerCase();
+
+    if (/^h[2-4]$/.test(tagName)) {
+      const heading = stripHTML(element.innerHTML).toLowerCase();
+      if (heading.includes("overview") || heading.includes("expect")) currentSection = "overview";
+      else if (heading.includes("highlight")) currentSection = "highlights";
+      else if (heading.includes("itinerary") || heading.includes("day")) currentSection = "itinerary";
+      else if (heading.includes("include") || heading.includes("covered")) currentSection = "includes";
+      else if (heading.includes("fact")) currentSection = "facts";
+      else currentSection = "";
+      return;
+    }
+
+    if (!currentSection) return;
+
+    if (!sections[currentSection]) sections[currentSection] = [];
+
+    if (tagName === "ul" || tagName === "ol") {
+      sections[currentSection].push(
+        ...[...element.querySelectorAll("li")].map((item) => stripHTML(item.innerHTML).trim()).filter(Boolean)
+      );
+      return;
+    }
+
+    const text = stripHTML(element.innerHTML).trim();
+    if (text) sections[currentSection].push(text);
+  });
+
+  return sections;
+}
+
+function getLabeledContentValue(html = "", labels = []) {
+  const parser = new DOMParser();
+  const documentValue = parser.parseFromString(sanitizePostContent(html), "text/html");
+  const labelSet = labels.map((label) => label.toLowerCase());
+  const elements = [...documentValue.body.querySelectorAll("p, li")];
+
+  for (const element of elements) {
+    const text = stripHTML(element.innerHTML).trim();
+    const match = text.match(/^([^:]+):\s*(.+)$/);
+    if (!match) continue;
+
+    const label = match[1].trim().toLowerCase();
+    if (labelSet.includes(label)) {
+      return match[2].trim();
+    }
+  }
+
+  return "";
+}
+
+function formatTourPrice(value) {
+  if (!value) return "Custom quote";
+
+  const text = String(value).trim();
+  if (text.toLowerCase().includes("ksh")) return text;
+
+  const amount = Number(text.replace(/\D/g, ""));
+  if (!amount) return text;
+
+  return `From KSh ${amount.toLocaleString()}`;
+}
+
+function normalizeTourPost(post) {
+  const content = post.content?.rendered || "";
+  const sections = parseTourContentSections(content);
+  const title = stripHTML(post.title?.rendered);
+  const featuredImage = getFeaturedImage(post);
+  const duration = getField(post, ["duration", "tour_duration"]) || getLabeledContentValue(content, ["duration"]);
+  const category = getField(post, ["tour_category", "category", "trip_type"]) || getLabeledContentValue(content, ["category", "type"]);
+  const price = getField(post, ["price", "tour_price", "starting_price"]) || getLabeledContentValue(content, ["price", "starting price"]);
+  const summary = getField(post, ["summary", "tour_summary"]) || getLabeledContentValue(content, ["summary"]) || stripHTML(post.excerpt?.rendered).substring(0, 180);
+  const overview = getField(post, ["overview", "tour_overview"]) || sections.overview?.join(" ") || summary;
+  const facts = toList(getField(post, ["facts", "quick_facts", "tour_facts"]) || getLabeledContentValue(content, ["facts", "quick facts"]));
+  const highlights = toList(getField(post, ["highlights", "tour_highlights"]));
+  const itinerary = toList(getField(post, ["itinerary", "tour_itinerary"]));
+  const includes = toList(getField(post, ["includes", "included", "tour_includes"]));
+
+  return {
+    title,
+    category: [duration, category].filter(Boolean).join(" · ") || category || duration || "Trip details",
+    price: formatTourPrice(price),
+    image: featuredImage,
+    summary,
+    overview,
+    facts: facts.length ? facts : [duration, category].filter(Boolean),
+    highlights: highlights.length ? highlights : sections.highlights || [],
+    itinerary: itinerary.length ? itinerary : sections.itinerary || [],
+    includes: includes.length ? includes : sections.includes || [],
+    slug: post.slug
+  };
+}
+
+function renderTourCards(tours) {
+  const grid = document.querySelector(".tours-grid");
+  if (!grid || !Array.isArray(tours) || tours.length === 0) return;
+
+  grid.innerHTML = tours
+    .map((tour) => `
+      <article class="tour-card reveal visible">
+        <img src="${tour.image}" alt="${tour.title}">
+        <div class="card-body">
+          <p class="card-kicker">${tour.category}</p>
+          <h2>${tour.title}</h2>
+          <p>${tour.summary}</p>
+          <a class="btn btn-small" href="tour-detail.html?tour=${encodeURIComponent(tour.slug)}">View trip details</a>
+        </div>
+      </article>
+    `)
+    .join("");
+}
+
+async function loadWordPressToursList() {
+  const grid = document.querySelector(".tours-grid");
+  if (!grid) return;
+
+  try {
+    const response = await fetch(toursApiURL);
+    if (!response.ok) {
+      throw new Error(`WordPress API returned ${response.status}`);
+    }
+
+    const posts = await response.json();
+    if (!Array.isArray(posts) || posts.length === 0) return;
+
+    renderTourCards(posts.map(normalizeTourPost));
+  } catch (error) {
+    console.error("Failed to load WordPress tours:", error);
+  }
+}
+
+loadWordPressToursList();
+
+function applyTourDetail(tour, selectedSlug) {
+  if (!tour) return;
 
   document.title = `${tour.title} | Zipton Tours`;
   document.querySelector("#tour-category").textContent = tour.category;
@@ -354,8 +512,8 @@ function renderTourDetail() {
   document.querySelector("#tour-detail-hero").style.backgroundImage = `linear-gradient(90deg, rgba(0, 0, 0, 0.82), rgba(74, 43, 31, 0.62)), url("${tour.image}")`;
   document.querySelector("#tour-detail-image").innerHTML = `<img src="${tour.image}" alt="${tour.title}">`;
   document.querySelector("#tour-quick-facts").innerHTML = tour.facts.map((fact) => `<span>${fact}</span>`).join("");
-  document.querySelector("#tour-highlights").innerHTML = tour.highlights.map((item) => `<li>${item}</li>`).join("");
-  document.querySelector("#tour-includes").innerHTML = tour.includes.map((item) => `<li>${item}</li>`).join("");
+  document.querySelector("#tour-highlights").innerHTML = tour.highlights.map((item) => `<li>${item}</li>`).join("") || "<li>Custom planning with Zipton Tours</li>";
+  document.querySelector("#tour-includes").innerHTML = tour.includes.map((item) => `<li>${item}</li>`).join("") || "<li>Pre-trip consultation and booking support</li>";
   document.querySelector("#tour-itinerary").innerHTML = tour.itinerary
     .map((item, index) => `
       <div class="itinerary-item">
@@ -476,6 +634,34 @@ function renderTourDetail() {
     const methodMessage = encodeURIComponent(`Hello Zipton Tours, I would like to reserve the ${tour.title} and pay using ${method}.`);
     option.href = `https://wa.me/254710142850?text=${methodMessage}`;
   });
+}
+
+async function renderTourDetail() {
+  const page = document.querySelector(".tour-detail-page");
+  if (!page) return;
+
+  const params = new URLSearchParams(window.location.search);
+  const slug = params.get("tour") || "classic-safari-trail";
+  let tour = tourDetails[slug] || tourDetails["classic-safari-trail"];
+  let selectedSlug = tourDetails[slug] ? slug : "classic-safari-trail";
+
+  applyTourDetail(tour, selectedSlug);
+
+  try {
+    const response = await fetch(`${toursApiURL}?slug=${encodeURIComponent(slug)}`);
+    if (!response.ok) {
+      throw new Error(`WordPress API returned ${response.status}`);
+    }
+
+    const post = await response.json();
+    if (!post) return;
+
+    tour = normalizeTourPost(post);
+    selectedSlug = tour.slug || slug;
+    applyTourDetail(tour, selectedSlug);
+  } catch (error) {
+    console.error("Failed to load WordPress tour detail:", error);
+  }
 }
 
 renderTourDetail();
