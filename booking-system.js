@@ -16,6 +16,7 @@ class PremiumBookingSystem {
       tourSlug: '',
       durationDays: null,
       guests: 1,
+      baseAmount: 0,
       totalAmount: 0,
       depositAmount: 0,
       remainingBalance: 0,
@@ -99,6 +100,7 @@ class PremiumBookingSystem {
       const value = clamp(n);
       input.value = String(value);
       this.bookingSummary.guests = value;
+      this.recalculateBookingAmounts();
       this.updateBookingSummary();
     };
 
@@ -283,15 +285,25 @@ class PremiumBookingSystem {
 
     if (tourPrice) {
       const priceText = tourPrice.textContent.replace(/[^0-9,]/g, '');
-      this.bookingSummary.totalAmount = parseInt(priceText.replace(/,/g, '')) || 85000;
+      this.bookingSummary.baseAmount = parseInt(priceText.replace(/,/g, '')) || 85000;
     }
 
+    this.recalculateBookingAmounts();
+    this.updateBookingSummary();
+  }
+
+  recalculateBookingAmounts() {
+    const baseAmount = this.bookingSummary.baseAmount || this.bookingSummary.totalAmount || 85000;
+    const guests = Math.max(1, parseInt(this.bookingSummary.guests || '1', 10) || 1);
+
+    this.bookingSummary.baseAmount = baseAmount;
+    this.bookingSummary.guests = guests;
+    this.bookingSummary.totalAmount = baseAmount * guests;
     this.bookingSummary.depositAmount = Math.ceil(this.bookingSummary.totalAmount * 0.2);
     this.bookingSummary.remainingBalance = Math.max(
       0,
       this.bookingSummary.totalAmount - this.bookingSummary.depositAmount
     );
-    this.updateBookingSummary();
   }
 
   // Update booking summary display
