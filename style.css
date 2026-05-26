@@ -1181,6 +1181,39 @@ textarea {
   color: rgba(255, 255, 255, 0.76);
 }
 
+.footer-social {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.footer-social a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  margin-bottom: 0;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.footer-social a:hover {
+  border-color: var(--orange);
+  background: rgba(244, 155, 49, 0.18);
+  transform: translateY(-2px);
+}
+
+.footer-social img {
+  width: 19px;
+  height: 19px;
+  object-fit: contain;
+  display: block;
+}
+
 .footer-bottom {
   padding: 20px 0;
   border-top: 1px solid rgba(255, 255, 255, 0.14);
