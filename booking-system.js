@@ -1,7 +1,11 @@
 /**
  * Premium Booking & Payment System
  * Zipton Tours Luxury Travel Checkout Experience
+ * 
+ * Debug: Open browser console (F12) to see detailed logs
  */
+
+console.log('📦 Premium Booking System Script Loaded');
 
 class PremiumBookingSystem {
   constructor() {
