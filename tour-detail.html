@@ -22,6 +22,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css?v=9">
+  <link rel="stylesheet" href="booking-premium.css">
 </head>
 <body>
   <header class="site-header">
@@ -77,47 +78,136 @@
         <aside class="booking-panel reveal" aria-label="Booking options">
           <p class="eyebrow">Ready to travel?</p>
           <h2 id="booking-title">Book this trip</h2>
-          <p>Choose how you would like to move forward. You can ask questions first or reserve your place directly.</p>
+          <p>Choose how you would like to move forward. You can ask questions first or secure your place directly.</p>
           <div class="price-box">
             <span>Starting from</span>
             <strong id="tour-price">Custom quote</strong>
           </div>
+          <button id="pay-reserve-btn" type="button" aria-label="Open payment methods">Pay / Reserve</button>
           <a class="btn btn-primary" id="contact-tour-link" href="contact.html">Contact to Book</a>
-          <div class="payment-methods" aria-label="Payment methods">
-            <h3>Pay / Reserve with</h3>
-            <div class="payment-grid">
-              <a class="payment-option logo-only" data-payment-method="M-Pesa" href="https://wa.me/254710142850" target="_blank" rel="noopener" aria-label="Pay with M-Pesa">
-                <span class="payment-logo mpesa-logo" aria-hidden="true">M-PESA</span>
-              </a>
-              <a class="payment-option logo-only" data-payment-method="PayPal" href="https://wa.me/254710142850" target="_blank" rel="noopener" aria-label="Pay with PayPal">
-                <span class="payment-logo paypal-logo" aria-hidden="true">PayPal</span>
-              </a>
-              <a class="payment-option logo-only" data-payment-method="PesaPal" href="https://wa.me/254710142850" target="_blank" rel="noopener" aria-label="Pay with PesaPal">
-                <span class="payment-logo pesapal-logo" aria-hidden="true">PesaPal</span>
-              </a>
-              <a class="payment-option logo-only" data-payment-method="Stripe" href="#" rel="noopener" aria-label="Pay with Stripe">
-                <span class="payment-logo stripe-logo" aria-hidden="true">stripe</span>
-              </a>
-            </div>
-          </div>
           <p class="booking-note">Payments and reservations are confirmed directly with Zipton Tours before your travel date.</p>
         </aside>
       </div>
     </section>
 
-    <div class="payment-modal" id="mpesa-modal" aria-hidden="true">
-      <div class="payment-modal-backdrop" data-close-mpesa></div>
-      <section class="payment-modal-card" role="dialog" aria-modal="true" aria-labelledby="mpesa-modal-title">
-        <button class="modal-close" type="button" data-close-mpesa aria-label="Close M-Pesa payment">×</button>
-        <p class="eyebrow">M-Pesa STK Push</p>
-        <h2 id="mpesa-modal-title">Pay with M-Pesa</h2>
-        <p>Enter your M-Pesa phone number. You will receive a prompt on your phone to enter your PIN and complete the reservation payment.</p>
-        <form id="mpesa-form" class="mpesa-form">
-          <label for="mpesa-phone">M-Pesa phone number</label>
-          <input type="tel" id="mpesa-phone" name="phone" placeholder="0710 142 850" required>
-          <button class="btn btn-primary" type="submit">Send STK Push</button>
-          <p class="form-status" id="mpesa-status" role="status" aria-live="polite"></p>
-        </form>
+    <!-- Premium Payment Modal -->
+    <div class="payment-modal" id="premium-payment-modal" aria-hidden="true">
+      <div class="payment-modal-backdrop"></div>
+      <section class="payment-modal-card" role="dialog" aria-modal="true" aria-labelledby="payment-modal-title">
+        <button class="modal-close" type="button" aria-label="Close payment modal">×</button>
+        
+        <!-- Modal Header with Booking Summary -->
+        <div class="modal-header">
+          <p class="eyebrow" id="payment-modal-title">Secure Checkout</p>
+          <h2>Complete Your Booking</h2>
+          
+          <div class="booking-summary-card">
+            <div class="summary-row">
+              <span class="label">Trip:</span>
+              <span class="value" id="summary-tour-name">Loading...</span>
+            </div>
+            <div class="summary-row">
+              <span class="label">Duration:</span>
+              <span class="value" id="summary-duration">-</span>
+            </div>
+            <div class="summary-row">
+              <span class="label">Guests:</span>
+              <span class="value"><input type="number" id="summary-guests" value="1" min="1" style="width: 50px; border: none; background: none; text-align: right; font-weight: 800; color: var(--safari-orange);"></span>
+            </div>
+            
+            <!-- Reservation Toggle -->
+            <div class="reservation-toggle" style="margin-top: 16px;">
+              <div class="toggle-option">
+                <input type="radio" id="full-payment" name="payment-option" value="full" checked>
+                <label for="full-payment">Full Payment</label>
+              </div>
+              <div class="toggle-option">
+                <input type="radio" id="deposit-payment" name="payment-option" value="deposit">
+                <label for="deposit-payment">Reserve with Deposit (20%)</label>
+              </div>
+              <div class="deposit-info" id="deposit-info">
+                <strong>Deposit:</strong> <span id="summary-deposit-amount">KSh 15,000</span><br>
+                <small>Balance due 7 days before travel</small>
+              </div>
+            </div>
+            
+            <div class="summary-row" style="margin-top: 16px;">
+              <span class="label" style="font-size: 1rem;">Total:</span>
+              <span class="value" style="font-size: 1.2rem;" id="summary-total-amount">KSh 85,000</span>
+            </div>
+            
+            <div class="secure-indicator">Secure checkout</div>
+          </div>
+        </div>
+
+        <!-- Payment Tabs -->
+        <div class="payment-tabs" role="tablist">
+          <button type="button" role="tab" data-payment-tab="mpesa" class="active" aria-selected="true">M-Pesa</button>
+          <button type="button" role="tab" data-payment-tab="card" aria-selected="false">Card</button>
+          <button type="button" role="tab" data-payment-tab="paypal" aria-selected="false">PayPal</button>
+          <button type="button" role="tab" data-payment-tab="pesapal" aria-selected="false">PesaPal</button>
+        </div>
+
+        <!-- Payment Views -->
+        <div class="payment-views">
+          
+          <!-- M-Pesa Payment View -->
+          <div class="payment-view active" data-payment-method="mpesa" role="tabpanel">
+            <h3 style="color: var(--warm-brown); margin-bottom: 16px; font-size: 1.1rem;">Pay with M-Pesa STK Push</h3>
+            <p style="color: var(--light-text); margin-bottom: 20px; font-size: 0.9rem;">Enter your M-Pesa phone number. You'll receive a prompt on your phone to enter your PIN.</p>
+            <form id="mpesa-payment-form" class="payment-form">
+              <div class="form-group">
+                <label for="mpesa-phone">Phone Number</label>
+                <input type="tel" id="mpesa-phone" name="phone" placeholder="0710 142 850" required>
+              </div>
+              <button type="submit" class="btn-submit" style="width: 100%; background: linear-gradient(135deg, var(--safari-orange) 0%, #B86A2C 100%); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 800; cursor: pointer;">Send STK Push</button>
+              <p class="form-status" id="mpesa-status" role="status" aria-live="polite"></p>
+            </form>
+          </div>
+
+          <!-- Card Payment View -->
+          <div class="payment-view" data-payment-method="card" role="tabpanel">
+            <h3 style="color: var(--warm-brown); margin-bottom: 16px; font-size: 1.1rem;">Card Payment</h3>
+            <div class="stripe-info">Secure payment powered by Stripe</div>
+            <form id="stripe-payment-form" class="payment-form">
+              <div class="form-group full-width">
+                <label for="cardholder">Cardholder Name</label>
+                <input type="text" id="cardholder" name="cardholder" placeholder="John Doe" required>
+              </div>
+              <div class="form-group full-width">
+                <label for="card-number">Card Number</label>
+                <input type="text" id="card-number" name="card-number" placeholder="4242 4242 4242 4242" maxlength="19" required>
+              </div>
+              <div class="card-inputs-grid">
+                <div class="form-group">
+                  <label for="card-expiry">Expiry Date</label>
+                  <input type="text" id="card-expiry" name="card-expiry" placeholder="MM/YY" maxlength="5" required>
+                </div>
+                <div class="form-group">
+                  <label for="card-cvv">CVV</label>
+                  <input type="text" id="card-cvv" name="card-cvv" placeholder="123" maxlength="4" required>
+                </div>
+              </div>
+              <button type="submit" class="btn-submit" style="width: 100%; background: linear-gradient(135deg, var(--safari-orange) 0%, #B86A2C 100%); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 800; cursor: pointer;">Pay Now</button>
+              <p class="form-status" id="card-status" role="status" aria-live="polite"></p>
+            </form>
+          </div>
+
+          <!-- PayPal Payment View -->
+          <div class="payment-view" data-payment-method="paypal" role="tabpanel">
+            <h3 style="color: var(--warm-brown); margin-bottom: 16px; font-size: 1.1rem;">PayPal Checkout</h3>
+            <p style="color: var(--light-text); margin-bottom: 20px; font-size: 0.9rem;">You'll be redirected to PayPal to complete your payment securely.</p>
+            <button id="paypal-payment-btn" type="button">Pay with PayPal</button>
+          </div>
+
+          <!-- PesaPal Payment View -->
+          <div class="payment-view" data-payment-method="pesapal" role="tabpanel">
+            <h3 style="color: var(--warm-brown); margin-bottom: 16px; font-size: 1.1rem;">PesaPal Payment</h3>
+            <p style="color: var(--light-text); margin-bottom: 20px; font-size: 0.9rem;">Secure payment through PesaPal - Kenya's leading payment platform.</p>
+            <button id="pesapal-payment-btn" type="button">Pay with PesaPal</button>
+          </div>
+
+        </div>
       </section>
     </div>
   </main>
@@ -131,5 +221,6 @@
     <div class="footer-bottom container"><p>&copy; <span id="year"></span> Zipton Tours. All rights reserved.</p></div>
   </footer>
   <script src="main.js?v=9"></script>
+  <script src="booking-system.js"></script>
 </body>
 </html>
