@@ -168,14 +168,20 @@
 .payment-modal {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
   opacity: 0;
+  visibility: hidden;
   pointer-events: none;
   transition: opacity 0.3s ease;
 }
 
 .payment-modal.active {
   opacity: 1;
+  visibility: visible;
   pointer-events: auto;
 }
 
@@ -192,9 +198,7 @@
   left: 50%;
   transform: translate(-50%, -50%) translateY(10px) scale(0.96);
   max-height: 90vh;
-  max-width: 600px;
-  width: 100%;
-  margin: 0 20px;
+  width: min(100%, 600px);
   background: var(--white);
   border: 1px solid var(--border-light);
   border-radius: 16px;
