@@ -6,13 +6,17 @@ const tourNames = {
   "coastal-heritage-stay": "Coastal Heritage Stay",
   "market-makers-weekend": "Market & Makers Weekend",
   "mountain-valley-trek": "Mountain & Valley Trek",
-  "private-bespoke-journey": "Private Bespoke Journey"
+  "private-bespoke-journey": "Private Bespoke Journey",
+  "support-our-mission": "Support Zipton Tours Mission"
 };
 
 function jsonResponse(statusCode, body) {
   return {
     statusCode,
     headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Headers": "Content-Type",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
       "Content-Type": "application/json"
     },
     body: JSON.stringify(body)
@@ -132,6 +136,10 @@ async function registerIPN(host, basePath, token, siteURL) {
 }
 
 exports.handler = async (event) => {
+  if (event.httpMethod === "OPTIONS") {
+    return jsonResponse(200, {});
+  }
+
   if (event.httpMethod !== "POST") {
     return jsonResponse(405, { message: "Method not allowed." });
   }
@@ -181,7 +189,9 @@ exports.handler = async (event) => {
         id: reference,
         currency,
         amount,
-        description: isDeposit ? `${tourName} deposit reservation` : `${tourName} full reservation`,
+        description: tourSlug === "support-our-mission"
+          ? "Donation to support local tourism and Zipton Tours community work"
+          : isDeposit ? `${tourName} deposit reservation` : `${tourName} full reservation`,
         callback_url: `${siteURL}/pesapal-return.html?tour=${encodeURIComponent(tourSlug)}&bookingRef=${encodeURIComponent(
           bookingRef
         )}`,

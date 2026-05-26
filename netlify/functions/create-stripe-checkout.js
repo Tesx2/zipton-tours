@@ -25,6 +25,10 @@ const tourPrices = {
   "private-bespoke-journey": {
     name: "Private Bespoke Journey reservation",
     amount: 5000
+  },
+  "support-our-mission": {
+    name: "Support Zipton Tours Mission",
+    amount: 100000
   }
 };
 
@@ -32,6 +36,9 @@ function jsonResponse(statusCode, body) {
   return {
     statusCode,
     headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Headers": "Content-Type",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
       "Content-Type": "application/json"
     },
     body: JSON.stringify(body)
@@ -79,6 +86,10 @@ function createCheckoutSession(payload, secretKey) {
 }
 
 exports.handler = async (event) => {
+  if (event.httpMethod === "OPTIONS") {
+    return jsonResponse(200, {});
+  }
+
   if (event.httpMethod !== "POST") {
     return jsonResponse(405, { message: "Method not allowed." });
   }
@@ -122,11 +133,13 @@ exports.handler = async (event) => {
         "line_items[0][price_data][currency]": currency,
         "line_items[0][price_data][unit_amount]": String(amountMinor),
         "line_items[0][price_data][product_data][name]": tour.name,
-        "line_items[0][price_data][product_data][description]": isDeposit
+        "line_items[0][price_data][product_data][description]": tourSlug === "support-our-mission"
+          ? "Donation to support local tourism and Zipton Tours community work."
+          : isDeposit
           ? "Reservation deposit for Zipton Tours."
           : "Full payment for Zipton Tours.",
         "metadata[tour]": tourSlug,
-        "metadata[payment_type]": isDeposit ? "deposit" : "full_payment",
+        "metadata[payment_type]": tourSlug === "support-our-mission" ? "donation" : isDeposit ? "deposit" : "full_payment",
         "metadata[booking_ref]": bookingRef
       },
       secretKey

@@ -6,13 +6,17 @@ const tourNames = {
   "coastal-heritage-stay": "Coastal Heritage Stay",
   "market-makers-weekend": "Market & Makers Weekend",
   "mountain-valley-trek": "Mountain & Valley Trek",
-  "private-bespoke-journey": "Private Bespoke Journey"
+  "private-bespoke-journey": "Private Bespoke Journey",
+  "support-our-mission": "Support Zipton Tours Mission"
 };
 
 function jsonResponse(statusCode, body) {
   return {
     statusCode,
     headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Headers": "Content-Type",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
       "Content-Type": "application/json"
     },
     body: JSON.stringify(body)
@@ -100,6 +104,10 @@ async function getAccessToken(host, consumerKey, consumerSecret) {
 }
 
 exports.handler = async (event) => {
+  if (event.httpMethod === "OPTIONS") {
+    return jsonResponse(200, {});
+  }
+
   if (event.httpMethod !== "POST") {
     return jsonResponse(405, { message: "Method not allowed." });
   }

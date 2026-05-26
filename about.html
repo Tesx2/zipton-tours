@@ -22,6 +22,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css?v=10">
+  <link rel="stylesheet" href="booking-premium.css?v=3">
 </head>
 <body>
   <header class="site-header">
@@ -79,7 +80,7 @@
             <p class="eyebrow">Support local tourism</p>
             <h2>Help grow journeys that uplift culture, community, and place.</h2>
             <p>Zipton Tours is a growing travel and cultural exploration brand built for people who believe local tourism can create opportunity, preserve heritage, and inspire more meaningful travel. Your support helps us champion community-led experiences, responsible adventure, and the local guides, hosts, and storytellers who make every destination unforgettable.</p>
-            <a class="btn btn-primary" href="contact.html">Support Our Mission</a>
+            <button class="btn btn-primary" id="pay-reserve-btn" type="button" data-payment-purpose="donation">Support Our Mission</button>
           </div>
           <div class="support-tourism-media" aria-hidden="true">
             <img src="https://images.unsplash.com/photo-1523805009345-7448845a9e53?auto=format&fit=crop&w=1000&q=85" alt="">
@@ -87,6 +88,129 @@
         </article>
       </div>
     </section>
+
+    <div class="payment-modal" id="premium-payment-modal" aria-hidden="true">
+      <div class="payment-modal-backdrop"></div>
+      <section class="payment-modal-card" role="dialog" aria-modal="true" aria-labelledby="payment-modal-title">
+        <button class="modal-close" type="button" aria-label="Close payment modal">×</button>
+        <div class="modal-header">
+          <p class="eyebrow" id="payment-modal-title">Support Our Mission</p>
+          <h2>Choose Your Donation</h2>
+          <div class="booking-summary-card">
+            <div class="modal-summary-top">
+              <img id="summary-tour-thumb" class="modal-tour-thumb" src="images/logo-main.png" alt="Zipton Tours">
+              <div class="modal-summary-top-meta">
+                <div class="modal-summary-tour-name">
+                  <span class="label">Purpose:</span>
+                  <span class="value" id="summary-tour-name">Support Zipton Tours Mission</span>
+                </div>
+                <div class="modal-summary-facts" id="summary-guests-duration">
+                  <span id="summary-guests-count">Community tourism</span>
+                  <span class="dot">•</span>
+                  <span id="summary-duration-days">Open amount</span>
+                </div>
+              </div>
+            </div>
+            <div class="donation-amount-field">
+              <label for="donation-amount">Donation amount (KSh)</label>
+              <input type="number" id="donation-amount" name="donation-amount" value="1000" min="1" step="100" inputmode="numeric">
+            </div>
+            <div class="summary-row" style="margin-top: 16px;">
+              <span class="label" style="font-size: 1rem;">Total:</span>
+              <span class="value" style="font-size: 1.2rem;" id="summary-total-amount">KSh 1,000</span>
+            </div>
+            <div class="summary-row" style="margin-top: 10px;">
+              <span class="label" style="font-size: 0.95rem;" id="summary-today-label">Donation Today:</span>
+              <span class="value" style="font-size: 1.05rem;" id="summary-today-amount">KSh 1,000</span>
+            </div>
+            <div class="secure-indicator">Secure Checkout</div>
+          </div>
+        </div>
+
+        <div class="payment-tabs" role="tablist">
+          <button type="button" role="tab" data-payment-tab="mpesa" class="active" aria-selected="true">M-Pesa</button>
+          <button type="button" role="tab" data-payment-tab="card" aria-selected="false">Card</button>
+          <button type="button" role="tab" data-payment-tab="paypal" aria-selected="false">PayPal</button>
+          <button type="button" role="tab" data-payment-tab="pesapal" aria-selected="false">PesaPal</button>
+        </div>
+
+        <div class="payment-views">
+          <div class="payment-view active" data-payment-method="mpesa" role="tabpanel">
+            <h3 style="color: var(--warm-brown); margin-bottom: 16px; font-size: 1.1rem;">M-Pesa STK Push</h3>
+            <p style="color: var(--light-text); margin-bottom: 20px; font-size: 0.9rem;">Enter your phone number and approve the secure prompt using your PIN.</p>
+            <form id="mpesa-payment-form" class="payment-form">
+              <div class="form-group">
+                <label for="mpesa-amount">Amount</label>
+                <input type="text" id="mpesa-amount" name="amount" readonly value="KSh 1,000" autocomplete="off">
+              </div>
+              <div class="form-group">
+                <label for="mpesa-phone">Phone Number</label>
+                <input type="tel" id="mpesa-phone" name="phone" placeholder="0710 142 850" autocomplete="tel" required>
+              </div>
+              <button type="submit" class="btn-submit" id="mpesa-proceed-btn">
+                <span id="mpesa-proceed-btn-text">Donate with M-Pesa</span>
+                <span class="spinner" id="mpesa-proceed-spinner" style="display:none;" aria-hidden="true"></span>
+              </button>
+              <p class="form-status" id="mpesa-status" role="status" aria-live="polite"></p>
+            </form>
+          </div>
+
+          <div class="payment-view" data-payment-method="card" role="tabpanel">
+            <h3 style="color: var(--warm-brown); margin-bottom: 16px; font-size: 1.1rem;">Card Donation</h3>
+            <div class="stripe-info">Secure payment powered by Stripe <span class="card-type-badge" id="card-type-badge">Card: Detecting…</span></div>
+            <form id="stripe-payment-form" class="payment-form">
+              <div class="form-group full-width">
+                <label for="cardholder">Cardholder Name</label>
+                <input type="text" id="cardholder" name="cardholder" placeholder="John Doe" autocomplete="cc-name" required>
+              </div>
+              <div class="form-group full-width">
+                <label for="card-number">Card Number</label>
+                <input type="text" id="card-number" name="card-number" placeholder="4242 4242 4242 4242" inputmode="numeric" autocomplete="cc-number" maxlength="19" required>
+              </div>
+              <div class="card-inputs-grid">
+                <div class="form-group">
+                  <label for="card-expiry">Expiry Date</label>
+                  <input type="text" id="card-expiry" name="card-expiry" placeholder="MM/YY" inputmode="numeric" autocomplete="cc-exp" maxlength="5" required>
+                </div>
+                <div class="form-group">
+                  <label for="card-cvv">CVV</label>
+                  <input type="text" id="card-cvv" name="card-cvv" placeholder="123" inputmode="numeric" autocomplete="cc-csc" maxlength="4" required>
+                </div>
+              </div>
+              <button type="submit" class="btn-submit" id="stripe-pay-btn">
+                <span id="stripe-pay-btn-text">Donate by Card</span>
+                <span class="spinner" id="stripe-pay-spinner" style="display:none;" aria-hidden="true"></span>
+              </button>
+              <p class="form-status" id="card-status" role="status" aria-live="polite"></p>
+            </form>
+          </div>
+
+          <div class="payment-view" data-payment-method="paypal" role="tabpanel">
+            <h3 style="color: var(--warm-brown); margin-bottom: 16px; font-size: 1.1rem;">PayPal</h3>
+            <p class="paypal-trust">You will be redirected to PayPal to complete your donation securely.</p>
+            <button id="paypal-payment-btn" type="button">Donate with PayPal</button>
+          </div>
+
+          <div class="payment-view" data-payment-method="pesapal" role="tabpanel">
+            <h3 style="color: var(--warm-brown); margin-bottom: 16px; font-size: 1.1rem;">PesaPal</h3>
+            <p class="pesapal-trust">Continue through PesaPal to support the Zipton Tours mission.</p>
+            <button id="pesapal-payment-btn" type="button">Donate with PesaPal</button>
+          </div>
+
+          <div class="payment-success-view" id="payment-success-view" style="display:none;" aria-live="polite">
+            <div class="success-icon" aria-hidden="true">✓</div>
+            <div class="success-message" id="success-message">Donation received</div>
+            <div class="confirmation-details">
+              <div class="detail-row"><span class="label">Reference</span><span class="value" id="success-booking-ref">—</span></div>
+              <div class="detail-row"><span class="label">Purpose</span><span class="value" id="success-tour-name">—</span></div>
+              <div class="detail-row"><span class="label">Supporters</span><span class="value" id="success-guests">—</span></div>
+              <div class="detail-row"><span class="label">Duration</span><span class="value" id="success-duration">—</span></div>
+              <div class="detail-row"><span class="label">Paid today</span><span class="value" id="success-amount-today">—</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
 
     <section class="section leadership-section">
       <div class="container">
@@ -188,5 +312,6 @@
     <div class="footer-bottom container"><p>&copy; <span id="year"></span> Zipton Tours. All rights reserved.</p></div>
   </footer>
   <script src="main.js?v=5"></script>
+  <script src="booking-system.js?v=3"></script>
 </body>
 </html>
