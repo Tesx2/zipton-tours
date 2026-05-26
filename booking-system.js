@@ -54,8 +54,12 @@ class PremiumBookingSystem {
   // Setup tab switching for payment methods
   setupPaymentTabs() {
     const tabs = document.querySelectorAll('[data-payment-tab]');
+    console.log(`✅ Found ${tabs.length} payment tabs`);
     tabs.forEach(tab => {
-      tab.addEventListener('click', () => this.switchPaymentMethod(tab.dataset.paymentTab));
+      tab.addEventListener('click', () => {
+        console.log(`🔵 Switching to payment method: ${tab.dataset.paymentTab}`);
+        this.switchPaymentMethod(tab.dataset.paymentTab);
+      });
     });
   }
 
@@ -81,46 +85,64 @@ class PremiumBookingSystem {
     // Open payment modal
     const payReserveBtn = document.getElementById('pay-reserve-btn');
     if (payReserveBtn) {
-      payReserveBtn.addEventListener('click', () => this.openPaymentModal());
+      console.log('✅ Pay/Reserve button found, attaching click listener');
+      payReserveBtn.addEventListener('click', () => {
+        console.log('🎯 Pay/Reserve button clicked!');
+        this.openPaymentModal();
+      });
+    } else {
+      console.warn('⚠️ Pay/Reserve button not found');
     }
 
     // Payment form submissions
     const mpesaForm = document.getElementById('mpesa-payment-form');
     if (mpesaForm) {
+      console.log('✅ M-Pesa form found');
       mpesaForm.addEventListener('submit', (e) => this.handleMpesaPayment(e));
     }
 
     const cardForm = document.getElementById('stripe-payment-form');
     if (cardForm) {
+      console.log('✅ Card form found');
       cardForm.addEventListener('submit', (e) => this.handleCardPayment(e));
     }
 
     const paypalBtn = document.getElementById('paypal-payment-btn');
     if (paypalBtn) {
+      console.log('✅ PayPal button found');
       paypalBtn.addEventListener('click', () => this.handlePayPalPayment());
     }
 
     const pesapalBtn = document.getElementById('pesapal-payment-btn');
     if (pesapalBtn) {
+      console.log('✅ PesaPal button found');
       pesapalBtn.addEventListener('click', () => this.handlePesapalPayment());
     }
   }
 
   // Open payment modal with animation
   openPaymentModal() {
+    console.log('🔵 Opening payment modal...');
     const modal = document.getElementById('premium-payment-modal');
-    if (!modal) return;
+    if (!modal) {
+      console.error('❌ Modal element not found');
+      return;
+    }
 
     // Get tour data from the page
+    console.log('🔵 Extracting tour data...');
     this.extractTourData();
 
     // Show modal with animation
+    console.log('🔵 Adding active class to modal');
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
 
     // Trigger animation
     setTimeout(() => {
+      console.log('🔵 Adding animated class to modal');
       modal.classList.add('animated');
+      console.log('✅ Modal opened successfully');
     }, 10);
   }
 
@@ -246,10 +268,15 @@ class PremiumBookingSystem {
     const form = e.target;
     const statusEl = form.querySelector('.form-status');
 
+    const cardholder = form.querySelector('input[name="cardholder"]');
+    if (!cardholder || !cardholder.value) {
+      this.showError(statusEl, 'Please enter cardholder name');
+      return;
+    }
+
     this.showLoading(statusEl, 'Processing payment...');
 
     try {
-      const cardholderName = form.querySelector('input[name="cardholder"]').value;
       const cardNumber = form.querySelector('input[name="card-number"]').value.replace(/\s/g, '');
 
       if (!this.validateCard(cardNumber)) {
@@ -267,7 +294,7 @@ class PremiumBookingSystem {
         body: JSON.stringify({
           amount: amount,
           tour: this.bookingSummary.tourName,
-          cardholder: cardholderName
+          cardholder: cardholder.value
         })
       });
 
@@ -369,10 +396,29 @@ class PremiumBookingSystem {
 }
 
 // Initialize booking system when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    window.bookingSystem = new PremiumBookingSystem();
-  });
-} else {
+function initializeBookingSystem() {
+  console.log('🎯 Initializing Premium Booking System...');
+  
+  const payReserveBtn = document.getElementById('pay-reserve-btn');
+  const modal = document.getElementById('premium-payment-modal');
+  
+  if (!payReserveBtn) {
+    console.error('❌ Pay/Reserve button not found');
+    return;
+  }
+  
+  if (!modal) {
+    console.error('❌ Payment modal not found');
+    return;
+  }
+  
+  console.log('✅ Elements found, initializing system');
   window.bookingSystem = new PremiumBookingSystem();
+  console.log('✅ Booking system initialized successfully');
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeBookingSystem);
+} else {
+  initializeBookingSystem();
 }
