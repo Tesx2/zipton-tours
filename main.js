@@ -441,6 +441,38 @@ function renderTourDetail() {
       return;
     }
 
+    if (method === "PesaPal") {
+      option.href = "#";
+      option.addEventListener("click", async (event) => {
+        event.preventDefault();
+        option.classList.add("loading");
+        option.setAttribute("aria-label", "Opening PesaPal Checkout");
+
+        try {
+          const response = await fetch("/.netlify/functions/create-pesapal-order", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ tour: selectedSlug })
+          });
+          const data = await response.json();
+
+          if (!response.ok || !data.url) {
+            throw new Error(data.message || "PesaPal Checkout could not be opened.");
+          }
+
+          window.location.href = data.url;
+        } catch (error) {
+          console.error("PesaPal Checkout failed:", error);
+          option.classList.remove("loading");
+          option.setAttribute("aria-label", "Pay with PesaPal");
+          alert("PesaPal Checkout is not ready yet. Please contact Zipton Tours to reserve.");
+        }
+      });
+      return;
+    }
+
     const methodMessage = encodeURIComponent(`Hello Zipton Tours, I would like to reserve the ${tour.title} and pay using ${method}.`);
     option.href = `https://wa.me/254710142850?text=${methodMessage}`;
   });
