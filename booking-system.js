@@ -206,6 +206,8 @@ class PremiumBookingSystem {
       return;
     }
 
+    modal.setAttribute('aria-hidden', 'false');
+
     // Get tour data from the page
     console.log('🔵 Extracting tour data...');
     this.extractTourData();
@@ -251,6 +253,7 @@ class PremiumBookingSystem {
     modal.classList.remove('animated');
     setTimeout(() => {
       modal.classList.remove('active');
+      modal.setAttribute('aria-hidden', 'true');
       document.body.style.overflow = '';
     }, 300);
   }
@@ -781,16 +784,40 @@ function initializeBookingSystem() {
   const payReserveBtn = document.getElementById('pay-reserve-btn');
   const modal = document.getElementById('premium-payment-modal');
   
+  // Always attach a fallback click handler so the CTA never becomes a dead button.
+  // This protects the flow if initialization fails due to timing or other scripts.
+  document.addEventListener(
+    'click',
+    (e) => {
+      const btn = e.target && e.target.closest ? e.target.closest('#pay-reserve-btn') : null;
+      if (!btn) return;
+
+      if (window.bookingSystem && typeof window.bookingSystem.openPaymentModal === 'function') {
+        window.bookingSystem.openPaymentModal();
+        return;
+      }
+
+      // Minimal fallback: open modal without the full system.
+      const m = document.getElementById('premium-payment-modal');
+      if (!m) return;
+      m.setAttribute('aria-hidden', 'false');
+      m.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => m.classList.add('animated'), 10);
+    },
+    true
+  );
+
   if (!payReserveBtn) {
     console.error('❌ Pay/Reserve button not found');
     return;
   }
-  
+
   if (!modal) {
     console.error('❌ Payment modal not found');
     return;
   }
-  
+
   console.log('✅ Elements found, initializing system');
   window.bookingSystem = new PremiumBookingSystem();
   console.log('✅ Booking system initialized successfully');

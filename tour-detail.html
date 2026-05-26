@@ -118,7 +118,7 @@
 
                 <div class="guest-stepper" aria-label="Number of guests">
                   <button type="button" id="guests-decrease" class="guest-stepper-btn" aria-label="Decrease guests">−</button>
-                  <input type="number" id="summary-guests" value="1" min="1" max="10" inputmode="numeric" aria-label="Guests">
+                  <input type="number" id="summary-guests" name="guests" value="1" min="1" max="10" inputmode="numeric" autocomplete="off" aria-label="Guests">
                   <button type="button" id="guests-increase" class="guest-stepper-btn" aria-label="Increase guests">+</button>
                 </div>
               </div>
@@ -173,11 +173,11 @@
             <form id="mpesa-payment-form" class="payment-form">
               <div class="form-group">
                 <label for="mpesa-amount">Amount</label>
-                <input type="text" id="mpesa-amount" name="amount" readonly value="KSh 85,000">
+                <input type="text" id="mpesa-amount" name="amount" readonly value="KSh 85,000" autocomplete="off">
               </div>
               <div class="form-group">
                 <label for="mpesa-phone">Phone Number</label>
-                <input type="tel" id="mpesa-phone" name="phone" placeholder="0710 142 850" required>
+                <input type="tel" id="mpesa-phone" name="phone" placeholder="0710 142 850" autocomplete="tel" required>
               </div>
               <button type="submit" class="btn-submit" id="mpesa-proceed-btn">
                 <span id="mpesa-proceed-btn-text">Proceed</span>
