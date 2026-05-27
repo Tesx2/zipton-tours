@@ -187,6 +187,8 @@ exports.handler = async (event) => {
       }
     );
 
+    console.log("PayPal Order Response:", JSON.stringify(order, null, 2));
+
     const approveLink = order.links?.find((link) => link.rel === "approve")?.href;
 
     if (!approveLink) {
@@ -195,6 +197,7 @@ exports.handler = async (event) => {
 
     return jsonResponse(200, {
       id: order.id,
+      approvalUrl: approveLink, // Ensure approvalUrl is explicitly returned for client-side check
       url: approveLink
     });
   } catch (error) {

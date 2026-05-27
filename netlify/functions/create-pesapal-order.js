@@ -206,6 +206,8 @@ exports.handler = async (event) => {
       }
     );
 
+    console.log("PesaPal Order Response:", JSON.stringify(order, null, 2));
+
     if (!order.redirect_url) {
       return jsonResponse(500, { message: "PesaPal did not return a redirect URL." });
     }
@@ -213,6 +215,7 @@ exports.handler = async (event) => {
     return jsonResponse(200, {
       url: order.redirect_url,
       orderTrackingID: order.order_tracking_id,
+      redirectUrl: order.redirect_url, // Ensure redirectUrl is explicitly returned for client-side check
       merchantReference: order.merchant_reference
     });
   } catch (error) {
