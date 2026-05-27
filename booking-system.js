@@ -571,7 +571,9 @@ class PremiumBookingSystem {
       } else {
         this.showError(statusEl, data.error || 'Payment initiation failed');
         if (proceedBtn) proceedBtn.disabled = false;
-        if (proceedSpinner) proceedSpinner.style.display = 'none';
+        if (proceedSpinner) {
+          proceedSpinner.style.display = 'none';
+        }
       }
     } catch (error) {
       console.error('M-Pesa error:', error);
@@ -724,12 +726,15 @@ class PremiumBookingSystem {
       if (response.ok && (data.approvalUrl || data.url)) {
         window.location.href = data.approvalUrl || data.url;
       }
+      else {
+        const errorMessage = data.message || "PayPal Checkout could not be opened. No approval URL received.";
+        console.error("PayPal API response error:", data);
+        alert(`PayPal payment initiation failed: ${errorMessage}`);
+      }
     } catch (error) {
       console.error('PayPal error:', error);
-      alert('PayPal payment initiation failed');
       if (paypalBtn) {
-        paypalBtn.disabled = false;
-        paypalBtn.textContent = originalText || 'Continue with PayPal';
+        alert(`PayPal payment initiation failed: ${error.message || 'Network error.'}`);
       }
     }
   }
@@ -781,12 +786,15 @@ class PremiumBookingSystem {
       if (response.ok && (data.redirectUrl || data.url)) {
         window.location.href = data.redirectUrl || data.url;
       }
+      else {
+        const errorMessage = data.message || "PesaPal Checkout could not be opened. No redirect URL received.";
+        console.error("PesaPal API response error:", data);
+        alert(`PesaPal payment initiation failed: ${errorMessage}`);
+      }
     } catch (error) {
       console.error('PesaPal error:', error);
-      alert('PesaPal payment initiation failed');
       if (pesapalBtn) {
-        pesapalBtn.disabled = false;
-        pesapalBtn.textContent = pesapalOriginalText || 'Continue with PesaPal';
+        alert(`PesaPal payment initiation failed: ${error.message || 'Network error.'}`);
       }
     }
   }

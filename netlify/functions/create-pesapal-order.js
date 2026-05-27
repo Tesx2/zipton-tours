@@ -147,6 +147,7 @@ exports.handler = async (event) => {
   const missingEnv = ["PESAPAL_CONSUMER_KEY", "PESAPAL_CONSUMER_SECRET"].filter((key) => !process.env[key]);
 
   if (missingEnv.length) {
+    console.error("PesaPal Function: Missing environment variables:", missingEnv.join(", "));
     return jsonResponse(500, {
       message: `PesaPal is not configured. Missing: ${missingEnv.join(", ")}.`
     });
@@ -154,17 +155,21 @@ exports.handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body || "{}");
-    const tourSlug = String(body.tour || "");
+    const tourSlug = String(body.tour || ""); // Ensure tourSlug is always a string
+    console.log("PesaPal Function received tourSlug:", tourSlug);
     const tourName = tourNames[tourSlug];
 
     if (!tourName) {
+      console.error("PesaPal Function: Unknown tour selected with slug:", tourSlug);
       return jsonResponse(400, { message: "Unknown tour selected." });
     }
 
     const host = getPesaPalHost();
     const basePath = getPesaPalBasePath();
+    console.log("PesaPal Function: Using host:", host, "basePath:", basePath);
     const siteURL = process.env.URL || event.headers.origin || "https://ziptontour.netlify.app";
     const token = await getAccessToken(host, basePath);
+    console.log("PesaPal Function: Access token obtained.");
     const notificationID = await registerIPN(host, basePath, token, siteURL);
     const currency = process.env.PESAPAL_CURRENCY || "KES";
     const amountFromBody = Number(body.amount);
@@ -219,6 +224,7 @@ exports.handler = async (event) => {
       merchantReference: order.merchant_reference
     });
   } catch (error) {
+    console.error("PesaPal Function Error:", error.message);
     return jsonResponse(500, { message: error.message || "PesaPal order creation failed." });
   }
 };

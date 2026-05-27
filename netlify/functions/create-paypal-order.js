@@ -137,17 +137,21 @@ exports.handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body || "{}");
-    const tourSlug = String(body.tour || "");
+    const tourSlug = String(body.tour || ""); // Ensure tourSlug is always a string
+    console.log("PayPal Function received tourSlug:", tourSlug);
     const tourName = tourNames[tourSlug];
 
     if (!tourName) {
+      console.error("PayPal Function: Unknown tour selected with slug:", tourSlug);
       return jsonResponse(400, { message: "Unknown tour selected." });
     }
 
     const host = getPayPalHost();
+    console.log("PayPal Function: Using host:", host);
     const accessToken = await requestPayPalToken(host, clientId, clientSecret);
     const siteURL = process.env.URL || event.headers.origin || "https://ziptontour.netlify.app";
     const currency = process.env.PAYPAL_CURRENCY || "USD";
+    console.log("PayPal Function: Access token obtained.");
     const amountFromBody = body.amount != null ? String(body.amount) : null;
     const amount = amountFromBody || process.env.PAYPAL_RESERVATION_AMOUNT || "50.00";
     const isDeposit = Boolean(body.isDeposit);
@@ -201,6 +205,7 @@ exports.handler = async (event) => {
       url: approveLink
     });
   } catch (error) {
+    console.error("PayPal Function Error:", error.message);
     return jsonResponse(500, { message: error.message || "PayPal order creation failed." });
   }
 };
