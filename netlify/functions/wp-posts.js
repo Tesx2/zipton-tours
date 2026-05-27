@@ -1,7 +1,8 @@
 const crypto = require("crypto");
 const https = require("https");
 
-const WORDPRESS_POSTS_URL = "https://ziptontours.great-site.net/wp-json/wp/v2/posts";
+const WORDPRESS_BASE_URL = "https://ziptontours.great-site.net/wp-json/wp/v2";
+const BLOG_CATEGORY_SLUG = process.env.WP_BLOG_CATEGORY_SLUG || "articles";
 
 function request(url, headers = {}) {
   return new Promise((resolve, reject) => {
@@ -23,12 +24,6 @@ function request(url, headers = {}) {
       })
       .on("error", reject);
   });
-}
-
-function buildWordPressUrl(postId) {
-  const safePostId = postId ? String(postId).replace(/[^0-9]/g, "") : "";
-  const path = safePostId ? `${WORDPRESS_POSTS_URL}/${safePostId}` : WORDPRESS_POSTS_URL;
-  return `${path}?_embed`;
 }
 
 function solveProtectionCookie(html) {
@@ -64,52 +59,74 @@ function jsonResponse(statusCode, body) {
   };
 }
 
+async function fetchJson(url) {
+  const firstResponse = await request(url);
+  const firstContentType = firstResponse.headers["content-type"] || "";
+
+  if (firstContentType.includes("application/json")) {
+    return JSON.parse(firstResponse.body);
+  }
+
+  const cookieValue = solveProtectionCookie(firstResponse.body);
+
+  if (!cookieValue) {
+    throw new Error("WordPress API did not return JSON and the protection cookie could not be solved.");
+  }
+
+  const separator = url.includes("?") ? "&" : "?";
+  const jsonUrl = `${url}${separator}i=1`;
+  const jsonResponseFromWordPress = await request(jsonUrl, {
+    Cookie: `__test=${cookieValue}`
+  });
+  const jsonContentType = jsonResponseFromWordPress.headers["content-type"] || "";
+
+  if (!jsonContentType.includes("application/json")) {
+    throw new Error("WordPress API still did not return JSON after the protection cookie was applied.");
+  }
+
+  return JSON.parse(jsonResponseFromWordPress.body);
+}
+
+async function getBlogCategoryId() {
+  const categories = await fetchJson(
+    `${WORDPRESS_BASE_URL}/categories?slug=${encodeURIComponent(BLOG_CATEGORY_SLUG)}`
+  );
+
+  if (!Array.isArray(categories) || !categories[0]?.id) {
+    return "";
+  }
+
+  return categories[0].id;
+}
+
 exports.handler = async (event) => {
   try {
-    const wordpressUrl = buildWordPressUrl(event.queryStringParameters?.id);
-    const firstResponse = await request(wordpressUrl);
-    const firstContentType = firstResponse.headers["content-type"] || "";
-
-    if (firstContentType.includes("application/json")) {
-      return {
-        statusCode: 200,
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Content-Type": "application/json"
-        },
-        body: firstResponse.body
-      };
+    const postId = event.queryStringParameters?.id;
+    
+    // If fetching a single post, we don't need category filtering
+    if (postId) {
+      const safePostId = String(postId).replace(/[^0-9]/g, "");
+      const url = `${WORDPRESS_BASE_URL}/posts/${safePostId}?_embed`;
+      const post = await fetchJson(url);
+      return jsonResponse(200, post);
     }
 
-    const cookieValue = solveProtectionCookie(firstResponse.body);
-
-    if (!cookieValue) {
-      return jsonResponse(502, {
-        message: "WordPress API did not return JSON and the protection cookie could not be solved."
-      });
-    }
-
-    const separator = wordpressUrl.includes("?") ? "&" : "?";
-    const jsonUrl = `${wordpressUrl}${separator}i=1`;
-    const jsonResponseFromWordPress = await request(jsonUrl, {
-      Cookie: `__test=${cookieValue}`
+    // If fetching the blog list, filter by the blog category
+    const categoryId = await getBlogCategoryId();
+    const params = new URLSearchParams({
+      _embed: "1",
+      per_page: "12",
+      orderby: "date",
+      order: "desc"
     });
-    const jsonContentType = jsonResponseFromWordPress.headers["content-type"] || "";
 
-    if (!jsonContentType.includes("application/json")) {
-      return jsonResponse(502, {
-        message: "WordPress API still did not return JSON after the protection cookie was applied."
-      });
+    if (categoryId) {
+      params.set("categories", String(categoryId));
     }
 
-    return {
-      statusCode: 200,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Content-Type": "application/json"
-      },
-      body: jsonResponseFromWordPress.body
-    };
+    const posts = await fetchJson(`${WORDPRESS_BASE_URL}/posts?${params.toString()}`);
+    return jsonResponse(200, posts);
+
   } catch (error) {
     return jsonResponse(500, {
       message: "Failed to load WordPress posts.",

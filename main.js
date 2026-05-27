@@ -196,7 +196,7 @@ async function loadBlogPosts() {
           <article class="blog-card reveal visible">
             <img src="${featuredImage}" alt="${title}">
             <div class="blog-content">
-              <p class="card-kicker">From the blog</p>
+              <p class="card-kicker">Latest Article</p>
               <h3>${title}</h3>
               <p>${excerpt}...</p>
               <a href="single-post.html?id=${post.id}">Read More</a>

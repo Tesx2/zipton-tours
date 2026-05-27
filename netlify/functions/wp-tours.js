@@ -88,15 +88,20 @@ async function fetchJson(url) {
 }
 
 async function getToursCategoryId() {
-  const categories = await fetchJson(
-    `${WORDPRESS_BASE_URL}/categories?slug=${encodeURIComponent(TOURS_CATEGORY_SLUG)}`
-  );
+  // Support multiple slugs if provided via comma-separated string
+  const slugs = TOURS_CATEGORY_SLUG.split(",").map(s => s.trim()).filter(Boolean);
+  const ids = [];
 
-  if (!Array.isArray(categories) || !categories[0]?.id) {
-    return "";
+  for (const slug of slugs) {
+    const categories = await fetchJson(
+      `${WORDPRESS_BASE_URL}/categories?slug=${encodeURIComponent(slug)}`
+    );
+    if (Array.isArray(categories) && categories[0]?.id) {
+      ids.push(categories[0].id);
+    }
   }
 
-  return categories[0].id;
+  return ids.join(",");
 }
 
 exports.handler = async (event) => {
@@ -105,6 +110,7 @@ exports.handler = async (event) => {
     const categoryId = await getToursCategoryId();
 
     if (!categoryId) {
+      console.warn(`Category resolution failed for slugs: ${TOURS_CATEGORY_SLUG}`);
       return jsonResponse(200, slug ? null : []);
     }
 
