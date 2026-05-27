@@ -491,6 +491,10 @@ function renderTourCards(tours) {
 }
 
 async function loadWordPressToursList() {
+  // Only render tours on the tours page.
+  // This prevents any tour content from accidentally showing up elsewhere.
+  if (document.querySelector(".single-post-page")) return;
+
   const grid = document.querySelector(".tours-grid");
   if (!grid) return;
 

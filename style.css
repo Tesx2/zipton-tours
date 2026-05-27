@@ -306,6 +306,34 @@ h1 {
   object-fit: cover;
 }
 
+/* Scope tour card styling so it doesn't affect blog/article sections */
+/* Ensure tour-card styles do not override the blog layout */
+.blog-section .tour-card {
+  background: unset;
+  border: unset;
+  border-radius: unset;
+  overflow: unset;
+  box-shadow: unset;
+}
+
+.blog-section .tour-card img {
+  height: unset;
+}
+
+.blog-section .tour-card .card-body {
+  padding: unset;
+}
+
+.blog-section .tour-card .card-kicker {
+  margin-bottom: unset;
+}
+
+.blog-section .tour-card h2,
+.blog-section .tour-card h3 {
+  margin-bottom: unset;
+  font-size: unset;
+}
+
 .image-large {
   height: 390px;
   border-radius: 8px;
