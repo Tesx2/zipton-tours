@@ -550,6 +550,7 @@ class PremiumBookingSystem {
           phone: phoneInput.value,
           amount: amount,
           tour: this.bookingSummary.tourSlug,
+          tourName: this.bookingSummary.tourName,
           isDeposit: this.bookingSummary.isDeposit
         })
       });
@@ -655,6 +656,7 @@ class PremiumBookingSystem {
         body: JSON.stringify({
           amount: amount,
           tour: this.bookingSummary.tourSlug,
+          tourName: this.bookingSummary.tourName,
           cardholder: cardholder.value,
           bookingRef: bookingRef,
           isDeposit: this.bookingSummary.isDeposit
@@ -716,6 +718,7 @@ class PremiumBookingSystem {
         body: JSON.stringify({
           amount: amount,
           tour: this.bookingSummary.tourSlug,
+          tourName: this.bookingSummary.tourName,
           bookingRef: bookingRef,
           isDeposit: this.bookingSummary.isDeposit
         })
@@ -776,6 +779,7 @@ class PremiumBookingSystem {
         body: JSON.stringify({
           amount: amount,
           tour: this.bookingSummary.tourSlug,
+          tourName: this.bookingSummary.tourName,
           bookingRef: bookingRef,
           isDeposit: this.bookingSummary.isDeposit
         })

@@ -105,11 +105,10 @@ exports.handler = async (event) => {
   try {
     const body = JSON.parse(event.body || "{}");
     const tourSlug = String(body.tour || "");
-    const tour = tourPrices[tourSlug];
-
-    if (!tour) {
-      return jsonResponse(400, { message: "Unknown tour selected." });
-    }
+    const tour = tourPrices[tourSlug] || { 
+      name: body.tourName || "Zipton Tours reservation", 
+      amount: 5000 
+    };
 
     const siteURL = process.env.URL || event.headers.origin || "https://ziptontour.netlify.app";
     const currency = process.env.STRIPE_CURRENCY || "usd";

@@ -130,7 +130,7 @@ exports.handler = async (event) => {
     const body = JSON.parse(event.body || "{}");
     const tourSlug = String(body.tour || "");
     const phone = normalizePhone(body.phone);
-    const tourName = tourNames[tourSlug] || "Zipton Tours reservation";
+    const tourName = body.tourName || tourNames[tourSlug] || "Zipton Tours reservation";
 
     if (!/^254[17]\d{8}$/.test(phone)) {
       return jsonResponse(400, {

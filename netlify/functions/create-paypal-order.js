@@ -139,12 +139,7 @@ exports.handler = async (event) => {
     const body = JSON.parse(event.body || "{}");
     const tourSlug = String(body.tour || ""); // Ensure tourSlug is always a string
     console.log("PayPal Function received tourSlug:", tourSlug);
-    const tourName = tourNames[tourSlug];
-
-    if (!tourName) {
-      console.error("PayPal Function: Unknown tour selected with slug:", tourSlug);
-      return jsonResponse(400, { message: "Unknown tour selected." });
-    }
+    const tourName = body.tourName || tourNames[tourSlug] || "Zipton Tours Trip";
 
     const host = getPayPalHost();
     console.log("PayPal Function: Using host:", host);
