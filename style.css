@@ -146,6 +146,28 @@ select {
   color: var(--orange);
 }
 
+.nav-donate {
+  margin-left: 6px;
+  padding: 10px 16px !important;
+  color: var(--black) !important;
+  background: var(--orange) !important;
+  border-radius: 999px;
+  font-weight: 900;
+  border: 0 !important;
+  box-shadow: 0 12px 28px rgba(241, 144, 33, 0.22);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
+}
+
+.nav-donate:hover {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 18px 42px rgba(241, 144, 33, 0.35);
+  filter: saturate(1.1);
+}
+
+.nav-donate:active {
+  transform: translateY(-1px) scale(1.02);
+}
+
 .hero {
   position: relative;
   min-height: calc(100vh - 72px);
