@@ -1,0 +1,19 @@
+User-agent: *
+
+# Site indexation
+Allow: /
+
+# Block common non-content paths
+Disallow: /netlify/
+Disallow: /netlify/functions/
+Disallow: /.git/
+Disallow: /.well-known/
+
+# Block potentially sensitive/payment callback endpoints
+Disallow: /payment-success.html
+Disallow: /paypal-return.html
+Disallow: /pesapal-return.html
+
+# Prefer sitemap for discovery
+Sitemap: https://ziptontours.great-site.net/sitemap.xml
+
