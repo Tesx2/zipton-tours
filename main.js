@@ -475,6 +475,9 @@ function renderTourCards(tours) {
   const grid = document.querySelector(".tours-grid");
   if (!grid || !Array.isArray(tours) || tours.length === 0) return;
 
+  // On the homepage's featured section, we redirect to the full tours list
+  const isFeatured = !!grid.closest("#featured-tours");
+
   grid.innerHTML = tours
     .map((tour) => `
       <article class="tour-card reveal visible">
@@ -483,7 +486,7 @@ function renderTourCards(tours) {
           <p class="card-kicker">${tour.category}</p>
           <h2>${tour.title}</h2>
           <p>${tour.summary}</p>
-          <a class="btn btn-small" href="tour-detail.html?tour=${encodeURIComponent(tour.slug)}">View trip details</a>
+          <a class="btn btn-small" href="${isFeatured ? "tours.html" : `tour-detail.html?tour=${encodeURIComponent(tour.slug)}`}">View trip details</a>
         </div>
       </article>
     `)
@@ -491,12 +494,13 @@ function renderTourCards(tours) {
 }
 
 async function loadWordPressToursList() {
-  // Only render tours on the tours page.
-  // This prevents any tour content from accidentally showing up elsewhere.
-  if (document.querySelector(".single-post-page")) return;
-
   const grid = document.querySelector(".tours-grid");
-  if (!grid) return;
+
+  // Guard to prevent rendering on pages without a tours grid or on post detail pages
+  if (!grid || document.querySelector(".single-post-page")) return;
+
+  // Detect if we are in the "Featured Tours" section (usually on index.html)
+  const isFeaturedSection = !!grid.closest("#featured-tours");
 
   try {
     const response = await fetch(toursApiURL);
@@ -507,7 +511,21 @@ async function loadWordPressToursList() {
     const posts = await response.json();
     if (!Array.isArray(posts) || posts.length === 0) return;
 
-    renderTourCards(posts.map(normalizeTourPost));
+    let tours = posts.map(normalizeTourPost);
+
+    // If rendering for the Featured section, we can limit the count or pick specific items
+    if (isFeaturedSection) {
+      // Option 1: Limit to the latest 3 tours (standard "Featured" behavior)
+      tours = tours.slice(0, 3);
+
+      /* 
+      Option 2: Hand-pick specific tours by slug if you want total control:
+      const specificSlugs = ['classic-safari-trail', 'highland-culture-route'];
+      tours = tours.filter(t => specificSlugs.includes(t.slug));
+      */
+    }
+
+    renderTourCards(tours);
   } catch (error) {
     console.error("Failed to load WordPress tours:", error);
   }
