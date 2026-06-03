@@ -178,8 +178,8 @@ exports.handler = async (event) => {
         PartyB: process.env.MPESA_PARTY_B || shortcode,
         PhoneNumber: phone,
         CallBackURL: callbackURL,
-        AccountReference: `Zipton-${tourSlug || "Tour"}`.slice(0, 12),
-        TransactionDesc: tourName.slice(0, 100)
+        AccountReference: `Zipt${tourSlug || "Tour"}`.replace(/[^a-zA-Z0-9]/g, "").slice(0, 12),
+        TransactionDesc: tourName.replace(/[^a-zA-Z0-9 ]/g, "").slice(0, 100)
       }
     );
 
