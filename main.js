@@ -783,7 +783,14 @@ function applyTeamImages() {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
 
-    const extensions = ["jpg", "jpeg", "png", "webp"];
+    // Identify the current extension from HTML to try it first and avoid console 404s
+    const currentSrc = img.getAttribute("src") || "";
+    const currentExt = currentSrc.split('.').pop().toLowerCase();
+    
+    const extensions = [currentExt, "jpg", "jpeg", "png", "webp"].filter(
+      (ext, index, self) => self.indexOf(ext) === index && ext.length <= 4
+    );
+
     let extIndex = 0;
 
     const tryNextExtension = () => {
@@ -857,7 +864,9 @@ async function capturePayPalReturn() {
 
       setText("paypal-success-booking-ref", ref || data.bookingRef);
       setText("paypal-success-tour-name", data.tourName);
-      setText("paypal-success-guests", data.guests ? `${data.guests} ${data.guests === 1 ? "Guest" : "Guests"}` : "—");
+      setText("paypal-success-guests", data.reservationType === 'Donation' 
+        ? 'Support contribution' 
+        : (data.guests ? `${data.guests} ${data.guests === 1 ? "Guest" : "Guests"}` : "—"));
       setText("paypal-success-duration", data.durationDays ? `${data.durationDays} Days` : "—");
       setText("paypal-success-amount-today", data.amountToday != null ? fmtKSh(data.amountToday) : "—");
 

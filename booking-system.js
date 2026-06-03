@@ -185,11 +185,7 @@ class PremiumBookingSystem {
     // Open payment modal
     const payReserveBtn = document.getElementById('pay-reserve-btn');
     if (payReserveBtn) {
-      console.log('✅ Pay/Reserve button found, attaching click listener');
-      payReserveBtn.addEventListener('click', () => {
-        console.log('🎯 Pay/Reserve button clicked!');
-        this.openPaymentModal();
-      });
+      console.log('✅ Pay/Reserve button found (delegated via global listener)');
     } else {
       console.warn('⚠️ Pay/Reserve button not found');
     }
@@ -493,7 +489,9 @@ class PremiumBookingSystem {
     const guestsEl = document.getElementById('success-guests');
     if (guestsEl) {
       const g = guests || 1;
-      guestsEl.textContent = `${g} ${g === 1 ? 'Guest' : 'Guests'}`;
+      guestsEl.textContent = reservationType === 'Donation' 
+        ? 'Support contribution' 
+        : `${g} ${g === 1 ? 'Guest' : 'Guests'}`;
     }
 
     const durationEl = document.getElementById('success-duration');

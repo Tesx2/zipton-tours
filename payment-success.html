@@ -139,7 +139,9 @@
 
       setText('success-booking-ref-page', ref || data.bookingRef);
       setText('success-tour-name-page', data.tourName);
-      setText('success-guests-page', data.guests ? `${data.guests} ${data.guests === 1 ? 'Guest' : 'Guests'}` : '');
+      setText('success-guests-page', data.reservationType === 'Donation' 
+        ? 'Support contribution' 
+        : (data.guests ? `${data.guests} ${data.guests === 1 ? 'Guest' : 'Guests'}` : ''));
       setText('success-duration-page', data.durationDays ? `${data.durationDays} Days` : '');
       setText('success-amount-today-page', data.amountToday != null ? fmtKSh(data.amountToday) : '');
 
