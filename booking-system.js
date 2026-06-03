@@ -475,7 +475,9 @@ class PremiumBookingSystem {
 
     const msgEl = document.getElementById('success-message');
     if (msgEl) {
-      if (reservationType === 'Reserve with Deposit') {
+      if (reservationType === 'Donation') {
+        msgEl.textContent = 'Thank you for donating';
+      } else if (reservationType === 'Reserve with Deposit') {
         msgEl.textContent = 'Reservation secured with deposit';
       } else {
         msgEl.textContent = 'Reservation confirmed';

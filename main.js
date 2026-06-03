@@ -770,7 +770,7 @@ if (mpesaForm && mpesaStatus) {
 
 function applyTeamImages() {
   const teamCards = document.querySelectorAll(".team-card");
-  const placeholderSrc = "images/team/placeholder.jpg";
+  const placeholderSrc = "/images/team/placeholder.jpg";
 
   teamCards.forEach((card) => {
     const img = card.querySelector("img");
@@ -783,18 +783,22 @@ function applyTeamImages() {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
 
-    const jpgPath = `images/team/${sanitizedFileName}.jpg`;
-    const jpegPath = `images/team/${sanitizedFileName}.jpeg`;
+    const extensions = ["jpg", "jpeg", "png", "webp"];
+    let extIndex = 0;
 
-    img.src = jpgPath;
-    img.onerror = () => {
-      if (img.src.endsWith(".jpg")) {
-        img.src = jpegPath;
+    const tryNextExtension = () => {
+      if (extIndex < extensions.length) {
+        const ext = extensions[extIndex];
+        extIndex++;
+        img.src = `/images/team/${sanitizedFileName}.${ext}`;
       } else {
         img.src = placeholderSrc;
+        img.onerror = null; // Stop trying if placeholder fails
       }
-      img.onerror = null;
     };
+
+    img.onerror = tryNextExtension;
+    tryNextExtension();
   });
 }
 
