@@ -1,4 +1,8 @@
 const knowledgeBase = {
+    about: {
+        keywords: ["ceo", "founder", "owner", "anthony", "achayo", "mercy", "team", "leadership", "management", "who leads"],
+        response: "Zipton Tours is led by a passionate team:\n\n👤 **Anthony Achayo** — CEO & Visionary\n👤 **Musya Mercy Mutheu** — Communications Manager\n\nOur mission is to create travel experiences where adventure meets culture!"
+    },
     greetings: {
         keywords: ["hello", "hi", "hey", "good morning", "good afternoon", "good evening"],
         response: "Hello! 👋 Welcome to Zipton Tours! How can I help you today? I can assist with tours, bookings, volunteering, donations, and more. Feel free to ask or use the microphone 🎤 to speak with me."

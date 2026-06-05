@@ -33,17 +33,21 @@ const CACHE_TTL = 1000 * 60 * 30; // 30 minutes
 
 // Helper for WordPress sites with JS-based protection (InfinityFree/ByetHost)
 function solveProtectionCookie(html) {
-    const values = [...html.matchAll(/toNumbers\("([a-f0-9]+)"\)/g)].map((match) => match[1]);
-    if (values.length < 3) return "";
-    const [keyHex, ivHex, encryptedHex] = values;
-    const decipher = crypto.createDecipheriv("aes-128-cbc", Buffer.from(keyHex, "hex"), Buffer.from(ivHex, "hex"));
-    decipher.setAutoPadding(false);
-    return Buffer.concat([decipher.update(Buffer.from(encryptedHex, "hex")), decipher.final()]).toString("hex");
+    try {
+        const values = [...html.matchAll(/toNumbers\("([a-f0-9]+)"\)/g)].map((match) => match[1]);
+        if (values.length < 3) return "";
+        const [keyHex, ivHex, encryptedHex] = values;
+        const decipher = crypto.createDecipheriv("aes-128-cbc", Buffer.from(keyHex, "hex"), Buffer.from(ivHex, "hex"));
+        decipher.setAutoPadding(false);
+        return Buffer.concat([decipher.update(Buffer.from(encryptedHex, "hex")), decipher.final()]).toString("hex");
+    } catch (e) {
+        return "";
+    }
 }
 
 function wpRequest(url, headers = {}) {
     return new Promise((resolve, reject) => {
-        const req = https.get(url, { headers, timeout: 6000 }, (res) => { // Increased timeout to 6 seconds
+        const req = https.get(url, { headers, timeout: 3500 }, (res) => { 
             let body = "";
             res.on("data", (chunk) => body += chunk);
             res.on("end", () => resolve({ body, headers: res.headers }));
@@ -86,7 +90,7 @@ function getStaticKnowledge() {
         let staticContext = "CORE WEBSITE INFORMATION:\n";
 
         filesToRead.forEach(file => {
-            const filePath = path.join(process.cwd(), file);
+            const filePath = path.resolve(__dirname, "../../", file);
             if (fs.existsSync(filePath)) {
                 const html = fs.readFileSync(filePath, "utf8");
                 const text = html
@@ -111,12 +115,17 @@ async function getWebsiteContent() {
         return cachedContext;
     }
 
+    const staticContext = getStaticKnowledge();
+
     try {
-        // Fetch fewer items to stay within the 10s gateway timeout
-        const [posts, pages] = await Promise.all([
+        // Use a race to ensure slow WordPress responses don't cause 504 timeouts
+        const wpPromise = Promise.all([
             fetchWpJson(`${WORDPRESS_URL}/wp-json/wp/v2/posts?per_page=5`),
             fetchWpJson(`${WORDPRESS_URL}/wp-json/wp/v2/pages?per_page=5`)
         ]);
+        const timeoutPromise = new Promise(resolve => setTimeout(() => resolve([[], []]), 4000));
+
+        const [posts, pages] = await Promise.race([wpPromise, timeoutPromise]);
 
         const allItems = [...(Array.isArray(posts) ? posts : []), ...(Array.isArray(pages) ? pages : [])];
 
@@ -126,8 +135,6 @@ async function getWebsiteContent() {
             return `TOUR/PAGE: ${title}\nDETAILS: ${excerpt}`;
         }).join("\n\n");
 
-        // Merge WordPress data with our local file data
-        const staticContext = getStaticKnowledge();
         const context = `${staticContext}\n\nDYNAMIC UPDATES:\n${wpContext}`;
 
         cachedContext = context;
