@@ -1,3 +1,5 @@
+const fs = require("fs");
+const path = require("path");
 const crypto = require("crypto");
 const https = require("https");
 const express = require('express');
@@ -41,7 +43,6 @@ function solveProtectionCookie(html) {
 
 function wpRequest(url, headers = {}) {
     return new Promise((resolve, reject) => {
-        const req = https.get(url, { headers, timeout: 4000 }, (res) => {
         const req = https.get(url, { headers, timeout: 6000 }, (res) => { // Increased timeout to 6 seconds
             let body = "";
             res.on("data", (chunk) => body += chunk);
@@ -75,6 +76,35 @@ async function fetchWpJson(url) {
     }
 }
 
+/**
+ * Reads local HTML files to extract "static" knowledge like contact info, 
+ * team details, and company mission without hardcoding.
+ */
+function getStaticKnowledge() {
+    try {
+        const filesToRead = ["index.html", "about.html", "contact.html", "tours.html"];
+        let staticContext = "CORE WEBSITE INFORMATION:\n";
+
+        filesToRead.forEach(file => {
+            const filePath = path.join(process.cwd(), file);
+            if (fs.existsSync(filePath)) {
+                const html = fs.readFileSync(filePath, "utf8");
+                const text = html
+                    .replace(/<nav\b[^>]*>([\s\S]*?)<\/nav>/gi, "") // Skip navigation
+                    .replace(/<footer\b[^>]*>([\s\S]*?)<\/footer>/gi, "") // Skip footer
+                    .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gi, "") // Skip scripts
+                    .replace(/<\/?[^>]+(>|$)/g, " ") // Strip tags
+                    .replace(/\s+/g, " ") // Clean whitespace
+                    .trim();
+                staticContext += `FROM ${file}: ${text.substring(0, 1500)}\n\n`;
+            }
+        });
+        return staticContext;
+    } catch (err) {
+        return "Static website info unavailable.";
+    }
+}
+
 async function getWebsiteContent() {
     const now = Date.now();
     if (cachedContext && (now - lastCacheUpdate < CACHE_TTL)) {
@@ -89,16 +119,16 @@ async function getWebsiteContent() {
         ]);
 
         const allItems = [...(Array.isArray(posts) ? posts : []), ...(Array.isArray(pages) ? pages : [])];
-        
-        if (allItems.length === 0) {
-            return cachedContext || "General safari and travel information for East Africa.";
-        }
 
-        const context = allItems.map(item => {
+        const wpContext = allItems.map(item => {
             const title = item.title?.rendered || "Untitled";
             const excerpt = (item.excerpt?.rendered || "").replace(/<\/?[^>]+(>|$)/g, ""); 
             return `TOUR/PAGE: ${title}\nDETAILS: ${excerpt}`;
         }).join("\n\n");
+
+        // Merge WordPress data with our local file data
+        const staticContext = getStaticKnowledge();
+        const context = `${staticContext}\n\nDYNAMIC UPDATES:\n${wpContext}`;
 
         cachedContext = context;
         lastCacheUpdate = now;
