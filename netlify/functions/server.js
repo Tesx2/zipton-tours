@@ -125,7 +125,8 @@ router.post('/api/chat', async (req, res) => {
             1. Use the website knowledge above as your primary source for Zipton-specific packages.
             2. Be professional, warm, and use emojis (🦁, 🐘, 🏔️) to build excitement.
             3. If a specific price or itinerary isn't in the context, provide general estimates based on your expertise but advise the user to contact Zipton for a final quote.
-            4. Always encourage users to book or ask for contact details.`
+            4. Be concise and keep your responses brief (under 150 words).
+            5. Always encourage users to book or ask for contact details.`
         };
 
         const response = await fetch(NVIDIA_API_URL, {
@@ -138,7 +139,7 @@ router.post('/api/chat', async (req, res) => {
                 model: "meta/llama-3.1-70b-instruct", // or your preferred NVIDIA NIM model
                 messages: [systemMessage, ...messages],
                 temperature: 0.5,
-                max_tokens: 1024
+                max_tokens: 450
             })
         });
 
