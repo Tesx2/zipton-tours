@@ -164,6 +164,16 @@ function initSpeechRecognition() {
     }
 }
 
+// Unlock speech synthesis on first user interaction to bypass browser restrictions
+function unlockSpeech() {
+    if (synthesis) {
+        const silentUtterance = new SpeechSynthesisUtterance("");
+        synthesis.speak(silentUtterance);
+    }
+    document.removeEventListener('click', unlockSpeech);
+}
+document.addEventListener('click', unlockSpeech);
+
 function speak(text) {
     if (!voiceEnabled || !synthesis) return;
 
@@ -177,6 +187,12 @@ function speak(text) {
     utterance.volume = 1.0;
 
     const voices = synthesis.getVoices();
+    if (voices.length === 0) {
+        // If voices aren't loaded yet, try again briefly
+        setTimeout(() => speak(text), 100);
+        return;
+    }
+
     // Prioritize high-quality "Natural" (Edge) or "Google" (Chrome) male voices
     const preferredVoice = voices.find(v => v.lang.startsWith("en") && v.name.includes("Natural") && v.name.includes("Male")) ||
                            voices.find(v => v.lang.startsWith("en") && v.name.includes("Google") && v.name.includes("Male")) ||
@@ -185,6 +201,7 @@ function speak(text) {
 
     if (preferredVoice) utterance.voice = preferredVoice;
 
+    synthesis.resume(); // Fixes a bug in Chrome where speech gets stuck
     synthesis.speak(utterance);
 }
 

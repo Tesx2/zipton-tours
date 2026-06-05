@@ -1708,11 +1708,20 @@ body.high-contrast {
   50% { transform: translateY(-4px); opacity: 1; }
 }
 
-.mic-button.listening {
+#micButton.listening {
   background-color: #ff4b2b; /* Error/Alert Red for recording */
   color: white;
   animation: pulse-glow 1.5s infinite;
   border-radius: 50%;
+}
+
+.voice-status {
+  font-size: 0.75rem;
+  color: var(--primary);
+  text-align: center;
+  padding: 5px 0;
+  font-weight: 700;
+  min-height: 20px;
 }
 
 /* Welcome Card Specific Styles */
