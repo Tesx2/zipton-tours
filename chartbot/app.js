@@ -137,26 +137,34 @@ function initSpeechRecognition() {
         recognition.onstart = () => {
             isListening = true;
             micButton.classList.add("listening");
-            voiceStatus.textContent = "Listening... 🎤 Speak now";
+            voiceStatus.textContent = "I'm listening... 🎤";
+            userInput.placeholder = "Speak now...";
         };
 
         recognition.onend = () => {
             isListening = false;
             micButton.classList.remove("listening");
-            voiceStatus.textContent = "";
+            if (userInput.value.trim() === "") {
+                voiceStatus.textContent = "No speech detected. Tap mic to try again.";
+                setTimeout(() => { 
+                    voiceStatus.textContent = ""; 
+                    userInput.placeholder = placeholders[currentPlaceholder];
+                }, 3000);
+            }
         };
 
         recognition.onresult = (event) => {
             const transcript = event.results[0][0].transcript;
             userInput.value = transcript;
+            voiceStatus.textContent = "Processing your voice... ✨"; 
             handleSend(); // Trigger message sending after transcription
         };
 
         recognition.onerror = (event) => {
             isListening = false;
             micButton.classList.remove("listening");
-            voiceStatus.textContent = "Voice error: " + event.error + ". Please type your message.";
-            setTimeout(() => { voiceStatus.textContent = ""; }, 3000);
+            voiceStatus.textContent = `Voice error: ${event.error}. Please type your message.`;
+            setTimeout(() => { voiceStatus.textContent = ""; }, 5000); // Give user more time to read error
         };
     } else {
         micButton.style.display = "none";
@@ -299,6 +307,7 @@ function removeTypingIndicator() {
 async function handleSend() {
     const message = userInput.value.trim();
     if (!message) return;
+    voiceStatus.textContent = ""; // Clear any previous voice status once message is being sent
 
     addMessage(message, "user");
     userInput.value = "";
