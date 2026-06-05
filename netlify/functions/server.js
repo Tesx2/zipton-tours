@@ -10,7 +10,8 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
 const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY;
-const WORDPRESS_URL = process.env.WORDPRESS_URL; // e.g., https://yourwebsite.com
+// Sanitize URL by removing potential trailing slash to prevent double slashes in fetch calls
+const WORDPRESS_URL = process.env.WORDPRESS_URL ? process.env.WORDPRESS_URL.replace(/\/$/, "") : "";
 
 if (!NVIDIA_API_KEY) {
     console.warn("Backend Warning: NVIDIA_API_KEY is missing from environment variables.");
