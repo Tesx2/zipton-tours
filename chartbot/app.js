@@ -330,15 +330,6 @@ document.addEventListener("keydown", (e) => {
                 e.preventDefault();
                 handleSend();
                 break;
-            case "=":
-            case "+":
-                e.preventDefault();
-                fontIncrease.click();
-                break;
-            case "-":
-                e.preventDefault();
-                fontDecrease.click();
-                break;
         }
     }
 });
