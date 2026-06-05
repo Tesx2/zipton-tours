@@ -1,20 +1,13 @@
-API Key Granted
-This is the only time your key will be displayed. This key is for API testing use only and never expires.
+# Allow all search engines and crawlers to access the site
+User-agent: *
+Allow: /
 
-ID
-a8318b06-0dbc-43ec-953c-8ae03884fd98
-Name
-opencode
-Expiration
-Never Expires
-API Key Granted
-This is the only time your key will be displayed. This key is for API testing use only and never expires.
+# Explicitly permit AI crawlers to index content for LLMs
+User-agent: GPTBot
+Allow: /
 
-ID
-a8318b06-0dbc-43ec-953c-8ae03884fd98
-Name
-opencode
-Expiration
-Never Expires
+User-agent: Google-Extended
+Allow: /
 
-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
+# Path to your sitemap
+Sitemap: https://ziptontour.netlify.app/sitemap.xml

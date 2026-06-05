@@ -149,7 +149,7 @@ function initSpeechRecognition() {
         recognition.onresult = (event) => {
             const transcript = event.results[0][0].transcript;
             userInput.value = transcript;
-            handleSend();
+            handleSend(); // Trigger message sending after transcription
         };
 
         recognition.onerror = (event) => {
