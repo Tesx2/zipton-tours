@@ -61,6 +61,11 @@ router.post('/api/chat', async (req, res) => {
             role: "system",
             content: `You are a world-class Safari and Travel Consultant for Zipton Tours. 
             Your expertise covers East Africa (Kenya, Tanzania, Uganda, Rwanda).
+
+            COMPANY IDENTITY:
+            - CEO & Founder: Anthony Achayo
+            - Communications Manager: Musya Mercy Mutheu
+            - Mission: Creating travel experiences where adventure meets culture.
             
             CURRENT WEBSITE KNOWLEDGE:
             ${websiteContext}

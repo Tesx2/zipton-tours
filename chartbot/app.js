@@ -1,7 +1,7 @@
 const knowledgeBase = {
     about: {
-        keywords: ["ceo", "founder", "owner", "anthony", "achayo", "mercy", "mutheu", "team", "leadership", "management", "who leads", "zipton ceo", "zipton founder", "zipton team"],
-        response: "Zipton Tours is led by a passionate team:\n\n👤 **Anthony Achayo** — CEO & Visionary\n👤 **Musya Mercy Mutheu** — Communications Manager\n\nOur mission is to create travel experiences where adventure meets culture! You can learn more about our team on the About Us page."
+        keywords: ["ceo", "founder", "owner", "anthony", "achayo", "mercy", "mutheu", "team", "leadership", "management", "who leads", "zipton ceo", "zipton founder", "zipton team", "boss", "director", "directors", "staff"],
+        response: "Zipton Tours is led by a dedicated team of travel experts and conservationists. Our leadership team is committed to creating authentic East African experiences. You can find detailed profiles of our CEO, managers, and guides on our **About Us** page!"
     },
     greetings: {
         keywords: ["hello", "hi", "hey", "good morning", "good afternoon", "good evening"],
@@ -168,15 +168,21 @@ function speak(text) {
     if (!voiceEnabled || !synthesis) return;
 
     synthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2700}-\u{27BF}]|[•\n]/gu, ""));
-    utterance.rate = 0.9;
-    utterance.pitch = 1;
-    utterance.volume = 1;
+    // Clean up text: remove emojis but keep newlines for natural pauses
+    const cleanText = text.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2700}-\u{27BF}]|[•]/gu, "");
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    
+    utterance.rate = 1.0; // Standard speed (1.0) sounds more human-like than 0.9
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
 
     const voices = synthesis.getVoices();
-    const preferredVoice = voices.find(voice =>
-        voice.lang.startsWith("en") && voice.name.includes("Female")
-    ) || voices.find(voice => voice.lang.startsWith("en"));
+    // Prioritize high-quality "Natural" (Edge) or "Google" (Chrome) male voices
+    const preferredVoice = voices.find(v => v.lang.startsWith("en") && v.name.includes("Natural") && v.name.includes("Male")) ||
+                           voices.find(v => v.lang.startsWith("en") && v.name.includes("Google") && v.name.includes("Male")) ||
+                           voices.find(v => v.lang.startsWith("en") && v.name.includes("Male")) ||
+                           voices.find(v => v.lang.startsWith("en"));
+
     if (preferredVoice) utterance.voice = preferredVoice;
 
     synthesis.speak(utterance);
