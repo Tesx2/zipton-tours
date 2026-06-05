@@ -1,19 +1,20 @@
-User-agent: *
+API Key Granted
+This is the only time your key will be displayed. This key is for API testing use only and never expires.
 
-# Site indexation
-Allow: /
+ID
+a8318b06-0dbc-43ec-953c-8ae03884fd98
+Name
+opencode
+Expiration
+Never Expires
+API Key Granted
+This is the only time your key will be displayed. This key is for API testing use only and never expires.
 
-# Block common non-content paths
-Disallow: /netlify/
-Disallow: /netlify/functions/
-Disallow: /.git/
-Disallow: /.well-known/
+ID
+a8318b06-0dbc-43ec-953c-8ae03884fd98
+Name
+opencode
+Expiration
+Never Expires
 
-# Block potentially sensitive/payment callback endpoints
-Disallow: /payment-success.html
-Disallow: /paypal-return.html
-Disallow: /pesapal-return.html
-
-# Prefer sitemap for discovery
-Sitemap: https://ziptontours.great-site.net/sitemap.xml
-
+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

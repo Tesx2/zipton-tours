@@ -42,6 +42,7 @@ function solveProtectionCookie(html) {
 function wpRequest(url, headers = {}) {
     return new Promise((resolve, reject) => {
         const req = https.get(url, { headers, timeout: 4000 }, (res) => {
+        const req = https.get(url, { headers, timeout: 6000 }, (res) => { // Increased timeout to 6 seconds
             let body = "";
             res.on("data", (chunk) => body += chunk);
             res.on("end", () => resolve({ body, headers: res.headers }));
@@ -56,9 +57,17 @@ async function fetchWpJson(url) {
         const res = await wpRequest(url);
         if (res.headers["content-type"]?.includes("application/json")) return JSON.parse(res.body);
         const cookie = solveProtectionCookie(res.body);
-        if (!cookie) return [];
+        if (!cookie) {
+            console.warn(`Protection cookie could not be solved for ${url}. Returning empty array.`);
+            return [];
+        }
         const separator = url.includes("?") ? "&" : "?";
         const finalRes = await wpRequest(`${url}${separator}i=1`, { Cookie: `__test=${cookie}` });
+        
+        if (!finalRes.headers["content-type"]?.includes("application/json")) {
+            console.warn(`WordPress API still did not return JSON after protection cookie for ${url}. Returning empty array.`);
+            return [];
+        }
         return JSON.parse(finalRes.body);
     } catch (e) {
         console.error(`Error fetching ${url}:`, e.message);
@@ -105,11 +114,15 @@ app.use('/', router);
 
 router.post('/api/chat', async (req, res) => {
     try {
+        console.log('Function started for /api/chat');
         if (!NVIDIA_API_KEY) {
+            console.error("NVIDIA_API_KEY is not configured.");
             return res.status(500).json({ error: "NVIDIA_API_KEY is not configured on the server." });
         }
 
+        console.log('Fetching website content...');
         const websiteContext = await getWebsiteContent();
+        console.log('Website content fetched. Length:', websiteContext.length);
         const { messages } = req.body;
 
         // Inject system instructions and live website data
@@ -125,10 +138,11 @@ router.post('/api/chat', async (req, res) => {
             1. Use the website knowledge above as your primary source for Zipton-specific packages.
             2. Be professional, warm, and use emojis (🦁, 🐘, 🏔️) to build excitement.
             3. If a specific price or itinerary isn't in the context, provide general estimates based on your expertise but advise the user to contact Zipton for a final quote.
-            4. Be concise and keep your responses brief (under 150 words).
+            4. Be extremely concise and keep your responses very brief (under 100 words).
             5. Always encourage users to book or ask for contact details.`
         };
 
+        console.log('Sending request to NVIDIA API...');
         const response = await fetch(NVIDIA_API_URL, {
             method: 'POST',
             headers: { 
@@ -139,19 +153,22 @@ router.post('/api/chat', async (req, res) => {
                 model: "meta/llama-3.1-70b-instruct", // or your preferred NVIDIA NIM model
                 messages: [systemMessage, ...messages],
                 temperature: 0.5,
-                max_tokens: 450
+                max_tokens: 300
             })
         });
+        console.log('Received response from NVIDIA API. Status:', response.status);
 
         if (!response.ok) {
             const errorData = await response.json();
+            console.error('NVIDIA API returned error:', errorData);
             return res.status(response.status).json(errorData);
         }
 
         const data = await response.json();
+        console.log('NVIDIA API data received successfully.');
         res.json(data);
     } catch (error) {
-        console.error('Server Error:', error);
+        console.error('Server Error in /api/chat:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
