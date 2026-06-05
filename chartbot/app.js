@@ -138,6 +138,7 @@ function initSpeechRecognition() {
         micButton.setAttribute("aria-label", "Start voice input"); // Set initial label
 
         recognition.onstart = () => {
+            recognition.transcriptReady = false; // Reset flag for new recognition session
             recognition.speechReceived = false;
             isListening = true;
             micButton.classList.add("listening");
@@ -150,12 +151,19 @@ function initSpeechRecognition() {
             isListening = false;
             micButton.classList.remove("listening");
             micButton.setAttribute("aria-label", "Start voice input"); // Revert label when not listening
-            if (!recognition.speechReceived && userInput.value.trim() === "") {
+            if (!recognition.speechReceived && !recognition.transcriptReady && userInput.value.trim() === "") {
                 voiceStatus.textContent = "No speech detected. Tap mic to try again.";
                 setTimeout(() => { 
                     voiceStatus.textContent = ""; 
                     userInput.placeholder = placeholders[currentPlaceholder];
                 }, 3000);
+            } else if (recognition.transcriptReady) {
+                // If speech was recognized and put into userInput, clear status after a delay
+                setTimeout(() => {
+                    if (voiceStatus.textContent.includes("I heard:")) { // Only clear if it's the transcription message
+                        voiceStatus.textContent = "";
+                    }
+                }, 3000); // Keep "I heard" message for 3 seconds
             }
         };
 
@@ -163,12 +171,9 @@ function initSpeechRecognition() {
             const transcript = event.results[0][0].transcript;
             userInput.value = transcript;
             recognition.speechReceived = true;
-            voiceStatus.textContent = `I heard: "${transcript}" ✨`; 
-            
-            // Small delay so the user can see the transcription before it's sent and cleared
-            setTimeout(() => {
-                handleSend(); 
-            }, 800);
+            recognition.transcriptReady = true; // Mark that a transcript is ready in the input field
+            voiceStatus.textContent = `I heard: "${transcript}" ✨`;
+            // Do NOT call handleSend() here. User will manually send after reviewing.
         };
 
         recognition.onerror = (event) => {
@@ -318,7 +323,17 @@ function removeTypingIndicator() {
 async function handleSend() {
     const message = userInput.value.trim();
     if (!message) return;
-    voiceStatus.textContent = ""; // Clear any previous voice status once message is being sent
+    
+    // Clear any previous voice status when sending
+    voiceStatus.textContent = ""; 
+    recognition.transcriptReady = false; // Reset flag as message is being sent
+
+    // If the user sends an empty message after voice input, clear status and re-enable input
+    if (!message) {
+        userInput.disabled = false;
+        sendButton.disabled = false;
+        return;
+    }
 
     addMessage(message, "user");
     userInput.value = "";
@@ -378,6 +393,16 @@ document.addEventListener("keydown", (e) => {
                 handleSend();
                 break;
         }
+    }
+});
+
+// Clear voice status if the user starts typing after a voice input
+userInput.addEventListener("input", () => {
+    if (voiceStatus.textContent.includes("I heard:") || voiceStatus.textContent.includes("No speech detected.")) {
+        voiceStatus.textContent = "";
+    }
+    if (isListening && recognition) {
+        recognition.stop(); // Stop ongoing recognition if user starts typing
     }
 });
 
