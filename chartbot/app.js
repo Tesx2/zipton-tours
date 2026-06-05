@@ -131,7 +131,7 @@ function initSpeechRecognition() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognition = new SpeechRecognition();
         recognition.continuous = false;
-        recognition.interimResults = false;
+        recognition.interimResults = true; // Enable real-time feedback while speaking
         recognition.lang = "en-US";
 
         micButton.title = "Click to speak with our Safari AI";
@@ -143,7 +143,7 @@ function initSpeechRecognition() {
             isListening = true;
             micButton.classList.add("listening");
             micButton.setAttribute("aria-label", "Stop voice input"); // Update label when listening
-            voiceStatus.textContent = "I'm listening... 🎤";
+            voiceStatus.textContent = "I'm listening... Speak now! 🎤";
             userInput.placeholder = "Speak now...";
         };
 
@@ -158,7 +158,6 @@ function initSpeechRecognition() {
                     userInput.placeholder = placeholders[currentPlaceholder];
                 }, 3000);
             } else if (recognition.transcriptReady) {
-                // If speech was recognized and put into userInput, clear status after a delay
                 setTimeout(() => {
                     if (voiceStatus.textContent.includes("I heard:")) { // Only clear if it's the transcription message
                         voiceStatus.textContent = "";
@@ -168,12 +167,20 @@ function initSpeechRecognition() {
         };
 
         recognition.onresult = (event) => {
-            const transcript = event.results[0][0].transcript;
+            let transcript = "";
+            for (let i = 0; i < event.results.length; i++) {
+                transcript += event.results[i][0].transcript;
+            }
+
             userInput.value = transcript;
-            recognition.speechReceived = true;
-            recognition.transcriptReady = true; // Mark that a transcript is ready in the input field
-            voiceStatus.textContent = `I heard: "${transcript}" ✨`;
-            // Do NOT call handleSend() here. User will manually send after reviewing.
+            recognition.speechReceived = true; // Mark that we heard something immediately
+
+            if (event.results[event.results.length - 1].isFinal) {
+                recognition.transcriptReady = true;
+                voiceStatus.textContent = `I heard: "${transcript}" ✨`;
+            } else {
+                voiceStatus.textContent = "Hearing you... 🎤";
+            }
         };
 
         recognition.onerror = (event) => {
