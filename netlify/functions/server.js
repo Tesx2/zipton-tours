@@ -43,7 +43,11 @@ async function getWebsiteContent() {
     }
 }
 
-app.post('/api/chat', async (req, res) => {
+const router = express.Router();
+app.use('/.netlify/functions/server', router);
+app.use('/', router);
+
+router.post('/api/chat', async (req, res) => {
     try {
         if (!NVIDIA_API_KEY) {
             return res.status(500).json({ error: "NVIDIA_API_KEY is not configured on the server." });

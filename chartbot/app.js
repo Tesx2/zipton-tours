@@ -97,7 +97,7 @@ let chatHistory = []; // Stores the conversation for context
 // Adjust the production path to match your Netlify function name (e.g., /.netlify/functions/server)
 const API_ENDPOINT = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" 
     ? "http://localhost:3000/api/chat" 
-    : "https://ziptontour.netlify.app/.netlify/functions/server/api/chat";
+    : "/api/chat";
 
 const chatbotUI = document.getElementById("chatbot-ui");
 const chatbotToggleButton = document.getElementById("chatbot-toggle-button");
