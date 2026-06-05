@@ -134,9 +134,14 @@ function initSpeechRecognition() {
         recognition.interimResults = false;
         recognition.lang = "en-US";
 
+        micButton.title = "Click to speak with our Safari AI";
+        micButton.setAttribute("aria-label", "Start voice input"); // Set initial label
+
         recognition.onstart = () => {
+            recognition.speechReceived = false;
             isListening = true;
             micButton.classList.add("listening");
+            micButton.setAttribute("aria-label", "Stop voice input"); // Update label when listening
             voiceStatus.textContent = "I'm listening... 🎤";
             userInput.placeholder = "Speak now...";
         };
@@ -144,7 +149,8 @@ function initSpeechRecognition() {
         recognition.onend = () => {
             isListening = false;
             micButton.classList.remove("listening");
-            if (userInput.value.trim() === "") {
+            micButton.setAttribute("aria-label", "Start voice input"); // Revert label when not listening
+            if (!recognition.speechReceived && userInput.value.trim() === "") {
                 voiceStatus.textContent = "No speech detected. Tap mic to try again.";
                 setTimeout(() => { 
                     voiceStatus.textContent = ""; 
@@ -156,8 +162,13 @@ function initSpeechRecognition() {
         recognition.onresult = (event) => {
             const transcript = event.results[0][0].transcript;
             userInput.value = transcript;
-            voiceStatus.textContent = "Processing your voice... ✨"; 
-            handleSend(); // Trigger message sending after transcription
+            recognition.speechReceived = true;
+            voiceStatus.textContent = `I heard: "${transcript}" ✨`; 
+            
+            // Small delay so the user can see the transcription before it's sent and cleared
+            setTimeout(() => {
+                handleSend(); 
+            }, 800);
         };
 
         recognition.onerror = (event) => {

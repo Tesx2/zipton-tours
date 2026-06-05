@@ -1710,6 +1710,13 @@ body.high-contrast {
 
 #micButton {
   transition: all 0.3s ease;
+  color: var(--dark);
+  background: rgba(91, 55, 22, 0.05);
+}
+
+#micButton:hover {
+  background: rgba(215, 155, 59, 0.15);
+  color: var(--primary);
 }
 
 #micButton.listening {
