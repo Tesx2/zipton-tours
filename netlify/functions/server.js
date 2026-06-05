@@ -1,3 +1,5 @@
+const crypto = require("crypto");
+const https = require("https");
 const express = require('express');
 const fetch = require('node-fetch');
 const cors = require('cors');
@@ -11,36 +13,89 @@ app.use(express.json());
 const PORT = process.env.PORT || 3000;
 const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY;
 // Sanitize URL by removing potential trailing slash to prevent double slashes in fetch calls
-const WORDPRESS_URL = process.env.WORDPRESS_URL ? process.env.WORDPRESS_URL.replace(/\/$/, "") : "";
+const WORDPRESS_URL = process.env.WORDPRESS_URL ? process.env.WORDPRESS_URL.replace(/\/$/, "") : "https://ziptontours.great-site.net";
 
 if (!NVIDIA_API_KEY) {
     console.warn("Backend Warning: NVIDIA_API_KEY is missing from environment variables.");
 }
-
 if (!WORDPRESS_URL) {
     console.warn("Backend Warning: WORDPRESS_URL is missing from environment variables.");
 }
 
 const NVIDIA_API_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
 
-async function getWebsiteContent() {
+// Cache variables to prevent hitting WP site on every request
+let cachedContext = null;
+let lastCacheUpdate = 0;
+const CACHE_TTL = 1000 * 60 * 30; // 30 minutes
+
+// Helper for WordPress sites with JS-based protection (InfinityFree/ByetHost)
+function solveProtectionCookie(html) {
+    const values = [...html.matchAll(/toNumbers\("([a-f0-9]+)"\)/g)].map((match) => match[1]);
+    if (values.length < 3) return "";
+    const [keyHex, ivHex, encryptedHex] = values;
+    const decipher = crypto.createDecipheriv("aes-128-cbc", Buffer.from(keyHex, "hex"), Buffer.from(ivHex, "hex"));
+    decipher.setAutoPadding(false);
+    return Buffer.concat([decipher.update(Buffer.from(encryptedHex, "hex")), decipher.final()]).toString("hex");
+}
+
+function wpRequest(url, headers = {}) {
+    return new Promise((resolve, reject) => {
+        const req = https.get(url, { headers, timeout: 4000 }, (res) => {
+            let body = "";
+            res.on("data", (chunk) => body += chunk);
+            res.on("end", () => resolve({ body, headers: res.headers }));
+        });
+        req.on("error", reject);
+        req.on("timeout", () => { req.destroy(); reject(new Error("WP Timeout")); });
+    });
+}
+
+async function fetchWpJson(url) {
     try {
+        const res = await wpRequest(url);
+        if (res.headers["content-type"]?.includes("application/json")) return JSON.parse(res.body);
+        const cookie = solveProtectionCookie(res.body);
+        if (!cookie) return [];
+        const separator = url.includes("?") ? "&" : "?";
+        const finalRes = await wpRequest(`${url}${separator}i=1`, { Cookie: `__test=${cookie}` });
+        return JSON.parse(finalRes.body);
+    } catch (e) {
+        console.error(`Error fetching ${url}:`, e.message);
+        return [];
+    }
+}
+
+async function getWebsiteContent() {
+    const now = Date.now();
+    if (cachedContext && (now - lastCacheUpdate < CACHE_TTL)) {
+        return cachedContext;
+    }
+
+    try {
+        // Fetch fewer items to stay within the 10s gateway timeout
         const [posts, pages] = await Promise.all([
-            fetch(`${WORDPRESS_URL}/wp-json/wp/v2/posts?per_page=20`).then(r => r.json().catch(() => [])),
-            fetch(`${WORDPRESS_URL}/wp-json/wp/v2/pages?per_page=20`).then(r => r.json().catch(() => []))
+            fetchWpJson(`${WORDPRESS_URL}/wp-json/wp/v2/posts?per_page=5`),
+            fetchWpJson(`${WORDPRESS_URL}/wp-json/wp/v2/pages?per_page=5`)
         ]);
 
         const allItems = [...(Array.isArray(posts) ? posts : []), ...(Array.isArray(pages) ? pages : [])];
         
-        if (allItems.length === 0) return "No specific tour data found on the website.";
+        if (allItems.length === 0) {
+            return cachedContext || "General safari and travel information for East Africa.";
+        }
 
-        return allItems.map(item => {
+        const context = allItems.map(item => {
             const title = item.title?.rendered || "Untitled";
             const excerpt = (item.excerpt?.rendered || "").replace(/<\/?[^>]+(>|$)/g, ""); 
             return `TOUR/PAGE: ${title}\nDETAILS: ${excerpt}`;
         }).join("\n\n");
+
+        cachedContext = context;
+        lastCacheUpdate = now;
+        return context;
     } catch (e) {
-        return "Website content currently unavailable.";
+        return cachedContext || "Website content currently unavailable.";
     }
 }
 
