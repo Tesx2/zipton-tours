@@ -133,7 +133,7 @@ if (year) {
   year.textContent = new Date().getFullYear();
 }
 
-const apiBaseURL = "/.netlify/functions/wp-posts";
+const apiBaseURL = "https://ziptontour.netlify.app/.netlify/functions/wp-posts";
 const apiURL = apiBaseURL;
 const toursApiURL = "https://ziptontour.netlify.app/.netlify/functions/wp-tours";
 

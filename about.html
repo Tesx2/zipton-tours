@@ -350,5 +350,60 @@
   </footer>
   <script src="main.js?v=5"></script>
   <script src="booking-system.js?v=3"></script>
+
+  <!-- Chatbot Toggle Button -->
+  <button id="chatbot-toggle-button" class="chatbot-toggle-button" aria-label="Open chatbot">
+    <img src="/images/icons/chat-bubble.gif" alt="Chat Assistant">
+  </button>
+
+  <!-- Chatbot Interface (initially hidden) -->
+  <div id="chatbot-ui" class="chatbot-container hidden">
+    <div class="chatbot-header">
+      <div class="chatbot-header-text">
+        <h3>Zipton Tours Assistant</h3>
+        <p class="chatbot-header-subtitle">Travel Expert • Online</p>
+      </div>
+      <button id="chatbot-close-button" class="chatbot-close-button" aria-label="Close chatbot">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    <div class="chatbot-hero-gif">
+      <img src="/images/icons/chat-bubble.gif" alt="Zipton AI">
+    </div>
+    <div id="voiceStatus" class="voice-status"></div>
+    <div id="chatContainer" class="chat-messages">
+      <!-- Initial Welcome Card -->
+      <div class="message bot-message welcome-card">
+        <div class="message-content">
+          👋 Jambo! I'm your Zipton guide. What can I help you discover today?
+        </div>
+      </div>
+      <!-- Quick Suggestion Chips -->
+      <div class="quick-suggestion-chips">
+        <button class="quick-suggestion-chip" data-query="Safari Packages">🦁 Safari Packages</button>
+        <button class="quick-suggestion-chip" data-query="Volunteer Programs">🤝 Volunteer Programs</button>
+        <button class="quick-suggestion-chip" data-query="Swahili Culture">🎭 Swahili Culture</button>
+        <button class="quick-suggestion-chip" data-query="Beach Holidays">🏖️ Beach Holidays</button>
+      </div>
+    </div>
+    <form id="chatForm" class="chat-input-form">
+      <div class="input-wrapper">
+        <button type="button" class="icon-btn" aria-label="Attach">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.51a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+        </button>
+        <input type="text" id="userInput" placeholder="Message assistant..." aria-label="Chat input" class="chat-input">
+        <div class="chat-input-actions">
+          <button type="button" id="micButton" class="icon-btn" aria-label="Voice input">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+          </button>
+          <button type="submit" id="sendButton" class="send-button" aria-label="Send">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <script src="chartbot/app.js"></script>
 </body>
 </html>

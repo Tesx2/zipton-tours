@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zipton Tours - AI Guide</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="chat-header">
+            <h1>Zipton Tours</h1>
+            <p>Virtual Travel Assistant</p>
+            <div class="accessibility-controls">
+                <button id="voiceToggle" class="access-btn" title="Toggle Voice" aria-label="Toggle voice on or off">
+                    🔊 Voice: ON
+                </button>
+                <button id="fontDecrease" class="access-btn" title="Decrease Font Size" aria-label="Decrease font size">A-</button>
+                <button id="fontIncrease" class="access-btn" title="Increase Font Size" aria-label="Increase font size">A+</button>
+                <button id="contrastToggle" class="access-btn" title="Toggle High Contrast" aria-label="Toggle high contrast mode">
+                    ☀ High Contrast
+                </button>
+            </div>
+        </header>
+
+        <main class="chat-container" id="chatContainer" role="log" aria-live="polite" aria-label="Chat messages">
+            <div class="message bot-message">
+                <div class="message-content">
+                    👋 Welcome to Zipton Tours!<br><br>
+                    I can help you explore destinations, book tours, learn about volunteering, and answer your travel questions. You can type your question or use the microphone to speak with me.
+                </div>
+                <div class="message-time">Just now</div>
+            </div>
+        </main>
+
+        <form class="input-container" id="chatForm">
+            <button type="button" id="micButton" class="mic-btn" title="Click to speak" aria-label="Voice input - click to speak">
+                🎤
+            </button>
+            <input 
+                type="text" 
+                id="userInput" 
+                class="chat-input" 
+                placeholder="Type your question or click 🎤 to speak..."
+                aria-label="Type your question"
+                autocomplete="off"
+            >
+            <button type="submit" id="sendButton" class="send-btn" title="Send message" aria-label="Send message">
+                ➤
+            </button>
+        </form>
+        <div id="voiceStatus" class="voice-status" role="status" aria-live="assertive"></div>
+    </div>
+
+    <script src="app.js?v=3"></script>
+</body>
+</html>

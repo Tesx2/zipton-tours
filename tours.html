@@ -149,5 +149,60 @@
     <div class="footer-bottom container"><p>&copy; <span id="year"></span> Zipton Tours. All rights reserved.</p></div>
   </footer>
   <script src="main.js?v=11"></script>
+
+  <!-- Chatbot Toggle Button -->
+  <button id="chatbot-toggle-button" class="chatbot-toggle-button" aria-label="Open chatbot">
+    <img src="/images/icons/chat-bubble.gif" alt="Chat Assistant">
+  </button>
+
+  <!-- Chatbot Interface (initially hidden) -->
+  <div id="chatbot-ui" class="chatbot-container hidden">
+    <div class="chatbot-header">
+      <div class="chatbot-header-text">
+        <h3>Zipton Tours Assistant</h3>
+        <p class="chatbot-header-subtitle">Explore Kenya with confidence</p>
+      </div>
+      <button id="chatbot-close-button" class="chatbot-close-button" aria-label="Close chatbot">✕</button>
+    </div>
+    <div class="chatbot-hero-gif">
+      <img src="/images/icons/chat-bubble.gif" alt="Animated Chat Assistant">
+    </div>
+    <div id="voiceStatus" class="voice-status"></div>
+    <div id="chatContainer" class="chat-messages">
+      <!-- Initial Welcome Card -->
+      <div class="message bot-message welcome-card">
+        <div class="message-content">
+          👋 Hi! I'm your Zipton Travel Assistant.
+          <ul class="welcome-card-list">
+            <li>• Find safari packages</li>
+            <li>• Learn about volunteering</li>
+            <li>• Discover Kenyan culture</li>
+            <li>• Plan custom tours</li>
+            <li>• Get pricing information</li>
+          </ul>
+        </div>
+      </div>
+      <!-- Quick Suggestion Chips -->
+      <div class="quick-suggestion-chips">
+        <button class="quick-suggestion-chip" data-query="Maasai Mara Safari">🦁 Maasai Mara Safari</button>
+        <button class="quick-suggestion-chip" data-query="Diani Beach Escape">🌴 Diani Beach Escape</button>
+        <button class="quick-suggestion-chip" data-query="Volunteer Opportunities">🤝 Volunteer Opportunities</button>
+        <button class="quick-suggestion-chip" data-query="Custom Tour Package">🎒 Custom Tour Package</button>
+      </div>
+    </div>
+    <form id="chatForm" class="chat-input-form">
+      <input type="text" id="userInput" placeholder="Ask about tours..." aria-label="Chat input" class="chat-input">
+      <button type="button" id="micButton" class="mic-button" aria-label="Toggle microphone">🎤</button>
+      <button type="submit" id="sendButton" class="send-button">Send</button>
+    </form>
+    <div class="chat-controls">
+      <button id="voiceToggle" type="button" class="control-button">🔊 Voice: ON</button>
+      <button id="fontDecrease" type="button" class="control-button">A-</button>
+      <button id="fontIncrease" type="button" class="control-button">A+</button>
+      <button id="contrastToggle" type="button" class="control-button">☀ High Contrast</button>
+    </div>
+  </div>
+
+  <script src="chartbot/app.js"></script>
 </body>
 </html>
