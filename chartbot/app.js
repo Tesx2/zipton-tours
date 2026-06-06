@@ -98,7 +98,6 @@ let voiceEnabled = true;
 let isListening = false;
 let recognition = null;
 let synthesis = window.speechSynthesis;
-let externalToursData = [];
 let chatHistory = []; // Stores the conversation for context
 
 // Automatically switch between local and production API endpoints
@@ -117,18 +116,6 @@ const micButton = document.getElementById("micButton");
 const chatbotHeroGif = document.querySelector(".chatbot-hero-gif img");
 const chatbotCloseButton = document.getElementById("chatbot-close-button");
 const voiceStatus = document.getElementById("voiceStatus");
-
-async function fetchToursData() {
-    try {
-        const response = await fetch("https://tabiji.ai/api/v1/destinations.json");
-        if (response.ok) {
-            const data = await response.json();
-            externalToursData = Array.isArray(data) ? data : (data.destinations || []);
-        }
-    } catch (error) {
-        console.warn("Could not load external tour data, falling back to local knowledge base.");
-    }
-}
 
 function initSpeechRecognition() {
     if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
@@ -427,7 +414,6 @@ if (synthesis) {
 }
 
 initSpeechRecognition();
-fetchToursData();
 
 // Handle quick suggestion chips
 document.querySelectorAll(".quick-suggestion-chip").forEach(chip => {
@@ -440,14 +426,16 @@ document.querySelectorAll(".quick-suggestion-chip").forEach(chip => {
     });
 });
 
-// Preload GIF for smoother animation
-if (chatbotHeroGif) new Image().src = chatbotHeroGif.src;
-
 function initChatbotToggle() {
     if (chatbotToggleButton) {
         chatbotToggleButton.addEventListener("click", () => {
             chatbotUI.classList.toggle("hidden");
             if (!chatbotUI.classList.contains("hidden")) {
+                // Lazy-load the heavy GIF only when needed
+                if (chatbotHeroGif && !chatbotHeroGif.src) {
+                    const actualSrc = chatbotHeroGif.getAttribute('data-src') || 'images/chat-bubble.gif';
+                    chatbotHeroGif.src = actualSrc;
+                }
                 userInput.focus();
             }
         });
