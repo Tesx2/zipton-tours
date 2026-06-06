@@ -1,11 +1,8 @@
 [build]
-  functions = "netlify/functions"
+  # This runs the build script we defined in package.json
+  command = "npm run build"
+  # This tells Netlify to serve the files in your root directory
+  publish = "."
 
 [functions]
-  included_files = ["*.html"]
-
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/server/api/:splat"
-  status = 200
-  force = true
+  directory = "netlify/functions"

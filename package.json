@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "Zipton Tours Website with AI Chatbot",
   "scripts": {
-    "start": "node netlify/functions/server.js"
+    "start": "node netlify/functions/server.js",
+    "build": "node generate-manifest.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

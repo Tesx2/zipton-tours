@@ -1658,6 +1658,24 @@ body.high-contrast {
   border-bottom-left-radius: 4px;
 }
 
+.bot-message .message-content pre {
+  background: #2d2d2d;
+  color: #f8f8f2;
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.85rem;
+  margin: 10px 0;
+}
+
+.bot-message .message-content code {
+  font-family: monospace;
+  background: rgba(0,0,0,0.05);
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
 /* --- Chips --- */
 .quick-suggestion-chips {
   display: flex;

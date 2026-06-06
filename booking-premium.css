@@ -21,24 +21,6 @@
   --shadow-large: 0 20px 60px rgba(45, 24, 16, 0.24);
 }
 
-:root {
-  /* Luxury color palette */
-  --safari-orange: #C97B36;
-  --warm-brown: #4B2E1E;
-  --deep-brown: #2D1810;
-  --cream: #F6F1EA;
-  --soft-beige: #EAE0D6;
-  --gold-accent: #D4A574;
-  --dark-text: #2D1810;
-  --light-text: #6B5344;
-  --border-light: #E8DED2;
-  --success-green: #4CAF50;
-  --error-red: #E53935;
-  --shadow-soft: 0 8px 24px rgba(45, 24, 16, 0.12);
-  --shadow-medium: 0 12px 40px rgba(45, 24, 16, 0.18);
-  --shadow-large: 0 20px 60px rgba(45, 24, 16, 0.24);
-}
-
 /* Booking Sidebar Enhancements */
 .booking-panel {
   background: linear-gradient(135deg, var(--cream) 0%, var(--soft-beige) 100%);

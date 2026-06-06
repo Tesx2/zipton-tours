@@ -43,6 +43,10 @@ const knowledgeBase = {
         keywords: ["volunteer", "volunteering", "help", "community", "project", "support", "join"],
         response: "Join our community volunteer programs! 🌍\n\nWe offer:\n\n🏫 Teaching programs at local schools\n🌳 Environmental conservation projects\n🏥 Community health outreach\n🎨 Youth arts and skills training\n\nVolunteers help make a real difference. No experience needed - just passion! Would you like to learn more about how to apply?"
     },
+    code_review: {
+        keywords: ["review code", "debug", "check my code", "refactor", "code analysis", "programming help"],
+        response: "I'd be happy to help! 💻 Paste your code snippet here, and I will analyze it for potential bugs, security issues, performance improvements, and provide a Code Quality Score."
+    },
     donations: {
         keywords: ["donate", "donation", "donations", "support", "give", "contribute", "money", "fund"],
         response: "Your donations directly support community projects! 💝\n\nWe fund:\n\n🍎 School meal programs\n💧 Clean water initiatives\n🏗️ School construction projects\n📚 Educational supplies\n\nEvery contribution counts. Visit our donations page or contact us to support Kenya's communities. Thank you for your generosity! 🙏"
@@ -87,7 +91,8 @@ const placeholders = [
     "How to book...",
     "Ask for a fun fact! 🦒",
     "Travel tips for Kenya...",
-    "Learn about Swahili culture..."
+    "Learn about Swahili culture...",
+    "Review my code 💻"
 ];
 
 let currentPlaceholder = 0;
@@ -104,7 +109,7 @@ let chatHistory = []; // Stores the conversation for context
 // Adjust the production path to match your Netlify function name (e.g., /.netlify/functions/server)
 const API_ENDPOINT = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" 
     ? "http://localhost:3000/api/chat" 
-    : "/api/chat";
+    : "/.netlify/functions/server/api/chat";
 
 const chatbotUI = document.getElementById("chatbot-ui");
 const chatbotToggleButton = document.getElementById("chatbot-toggle-button");
@@ -116,6 +121,25 @@ const micButton = document.getElementById("micButton");
 const chatbotHeroGif = document.querySelector(".chatbot-hero-gif img");
 const chatbotCloseButton = document.getElementById("chatbot-close-button");
 const voiceStatus = document.getElementById("voiceStatus");
+
+async function initKnowledgeManifest() {
+    try {
+        const response = await fetch("/knowledge-manifest.json");
+        if (response.ok) {
+            const manifest = await response.json();
+            if (manifest.tours && manifest.tours.length > 0) {
+                const tourKeywords = manifest.tours.map(t => t.title.toLowerCase());
+                const tourSlugs = manifest.tours.map(t => t.slug.toLowerCase());
+                
+                // Augment local knowledge base keywords with latest WordPress data
+                knowledgeBase.tours.keywords.push(...tourKeywords, ...tourSlugs);
+                knowledgeBase.destinations.keywords.push(...tourKeywords, ...tourSlugs);
+            }
+        }
+    } catch (error) {
+        console.warn("Local knowledge manifest fallback unavailable.");
+    }
+}
 
 function initSpeechRecognition() {
     if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
@@ -129,7 +153,7 @@ function initSpeechRecognition() {
         micButton.setAttribute("aria-label", "Start voice input"); // Set initial label
 
         recognition.onstart = () => {
-            recognition.transcriptReady = false; // Reset flag for new recognition session
+            recognition.isFinalized = false; 
             recognition.speechReceived = false;
             isListening = true;
             micButton.classList.add("listening");
@@ -142,13 +166,13 @@ function initSpeechRecognition() {
             isListening = false;
             micButton.classList.remove("listening");
             micButton.setAttribute("aria-label", "Start voice input"); // Revert label when not listening
-            if (!recognition.speechReceived && !recognition.transcriptReady && userInput.value.trim() === "") {
+            if (!recognition.speechReceived && userInput.value.trim() === "") {
                 voiceStatus.textContent = "No speech detected. Tap mic to try again.";
                 setTimeout(() => { 
                     voiceStatus.textContent = ""; 
                     userInput.placeholder = placeholders[currentPlaceholder];
                 }, 3000);
-            } else if (recognition.transcriptReady) {
+            } else if (recognition.isFinalized) {
                 setTimeout(() => {
                     if (voiceStatus.textContent.includes("I heard:")) { // Only clear if it's the transcription message
                         voiceStatus.textContent = "";
@@ -167,14 +191,22 @@ function initSpeechRecognition() {
             recognition.speechReceived = true; // Mark that we heard something immediately
 
             if (event.results[event.results.length - 1].isFinal) {
-                recognition.transcriptReady = true;
+                recognition.isFinalized = true;
                 voiceStatus.textContent = `I heard: "${transcript}" ✨`;
+
+                // Automatically trigger send after a small delay so the user can see the transcription
+                setTimeout(() => {
+                    if (userInput.value === transcript && transcript.trim() !== "") {
+                        handleSend();
+                    }
+                }, 1000);
             } else {
                 voiceStatus.textContent = "Hearing you... 🎤";
             }
         };
 
         recognition.onerror = (event) => {
+            console.error("Speech Recognition Error:", event.error);
             isListening = false;
             micButton.classList.remove("listening");
             voiceStatus.textContent = `Voice error: ${event.error}. Please type your message.`;
@@ -326,13 +358,6 @@ async function handleSend() {
     voiceStatus.textContent = ""; 
     recognition.transcriptReady = false; // Reset flag as message is being sent
 
-    // If the user sends an empty message after voice input, clear status and re-enable input
-    if (!message) {
-        userInput.disabled = false;
-        sendButton.disabled = false;
-        return;
-    }
-
     addMessage(message, "user");
     userInput.value = "";
     
@@ -414,6 +439,7 @@ if (synthesis) {
 }
 
 initSpeechRecognition();
+initKnowledgeManifest();
 
 // Handle quick suggestion chips
 document.querySelectorAll(".quick-suggestion-chip").forEach(chip => {

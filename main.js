@@ -768,44 +768,40 @@ if (mpesaForm && mpesaStatus) {
   });
 }
 
-function applyTeamImages() {
+async function applyTeamImages() {
   const teamCards = document.querySelectorAll(".team-card");
   const placeholderSrc = "/images/team/placeholder.jpg";
+
+  let manifest = {};
+  try {
+    // Fetch the manifest once for all cards
+    const response = await fetch("/team-manifest.json");
+    if (response.ok) {
+      manifest = await response.json();
+    }
+  } catch (error) {
+    console.warn("Team manifest could not be loaded, falling back to placeholders.", error);
+  }
 
   teamCards.forEach((card) => {
     const img = card.querySelector("img");
     const teamName = card.dataset.teamName?.trim();
     if (!img || !teamName) return;
 
-    const sanitizedFileName = teamName
-      .toLowerCase()
-      .replace(/[’'`]/g, "")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
+    // Look up the filename in the manifest using the raw team name
+    const fileName = manifest[teamName];
 
-    // Identify the current extension from HTML to try it first and avoid console 404s
-    const currentSrc = img.getAttribute("src") || "";
-    const currentExt = currentSrc.split('.').pop().toLowerCase();
-    
-    const extensions = [currentExt, "jpg", "jpeg", "png", "webp"].filter(
-      (ext, index, self) => self.indexOf(ext) === index && ext.length <= 4
-    );
-
-    let extIndex = 0;
-
-    const tryNextExtension = () => {
-      if (extIndex < extensions.length) {
-        const ext = extensions[extIndex];
-        extIndex++;
-        img.src = `/images/team/${sanitizedFileName}.${ext}`;
-      } else {
-        img.src = placeholderSrc;
-        img.onerror = null; // Stop trying if placeholder fails
-      }
+    if (fileName) {
+      img.src = `/images/team/${fileName}`;
+    } else {
+      img.src = placeholderSrc;
     };
 
-    img.onerror = tryNextExtension;
-    tryNextExtension();
+    // Final safety fallback if the manifest entry itself points to a missing file
+    img.onerror = () => {
+      img.src = placeholderSrc;
+      img.onerror = null;
+    };
   });
 }
 

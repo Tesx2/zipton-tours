@@ -88,11 +88,12 @@ function getStaticKnowledge() {
     try {
         const filesToRead = ["index.html", "about.html", "contact.html", "tours.html"];
         let staticContext = "CORE WEBSITE INFORMATION:\n";
+        const MAX_STATIC_CHARS = 2000; // Limit static info to 2000 chars total
 
         filesToRead.forEach(file => {
             const filePath = path.resolve(__dirname, "../../", file);
             if (fs.existsSync(filePath)) {
-                const html = fs.readFileSync(filePath, "utf8");
+                const html = fs.readFileSync(filePath, "utf8").substring(0, 5000); // Only parse start of file
                 const text = html
                     .replace(/<nav\b[^>]*>([\s\S]*?)<\/nav>/gi, "") // Skip navigation
                     .replace(/<footer\b[^>]*>([\s\S]*?)<\/footer>/gi, "") // Skip footer
@@ -100,10 +101,10 @@ function getStaticKnowledge() {
                     .replace(/<\/?[^>]+(>|$)/g, " ") // Strip tags
                     .replace(/\s+/g, " ") // Clean whitespace
                     .trim();
-                staticContext += `FROM ${file}: ${text.substring(0, 1500)}\n\n`;
+                staticContext += `FROM ${file}: ${text.substring(0, 500)}\n\n`;
             }
         });
-        return staticContext;
+        return staticContext.substring(0, MAX_STATIC_CHARS);
     } catch (err) {
         return "Static website info unavailable.";
     }
@@ -111,6 +112,27 @@ function getStaticKnowledge() {
 
 async function getWebsiteContent() {
     const now = Date.now();
+    
+    const MAX_TOTAL_CONTEXT = 6000; // Total character limit for AI context
+
+    // Check for build-time manifest in multiple potential locations
+    try {
+        const potentialPaths = [
+            path.resolve(__dirname, "../../knowledge-manifest.json"),
+            path.resolve(__dirname, "knowledge-manifest.json")
+        ];
+        const validPath = potentialPaths.find(p => fs.existsSync(p));
+
+        if (validPath) {
+            const manifest = JSON.parse(fs.readFileSync(validPath, "utf8"));
+            const staticContext = getStaticKnowledge();
+            const combined = `${staticContext}\n\nPRE-BUILT UPDATES (Last Synced: ${manifest.lastUpdated}):\n${manifest.wordpressContent}`;
+            return combined.substring(0, MAX_TOTAL_CONTEXT);
+        }
+    } catch (e) {
+        console.warn("Could not read knowledge manifest, falling back to runtime fetch.");
+    }
+
     if (cachedContext && (now - lastCacheUpdate < CACHE_TTL)) {
         return cachedContext;
     }
@@ -135,7 +157,7 @@ async function getWebsiteContent() {
             return `TOUR/PAGE: ${title}\nDETAILS: ${excerpt}`;
         }).join("\n\n");
 
-        const context = `${staticContext}\n\nDYNAMIC UPDATES:\n${wpContext}`;
+        const context = `${staticContext}\n\nDYNAMIC UPDATES:\n${wpContext}`.substring(0, MAX_TOTAL_CONTEXT);
 
         cachedContext = context;
         lastCacheUpdate = now;
@@ -165,14 +187,29 @@ router.post('/api/chat', async (req, res) => {
         // Inject system instructions and live website data
         const systemMessage = {
             role: "system",
-            content: `You are a world-class Safari and Travel Consultant for Zipton Tours. 
-            Your expertise covers East Africa (Kenya, Tanzania, Uganda, Rwanda).
-
-            COMPANY IDENTITY:
-            - CEO & Founder: ${process.env.COMPANY_CEO || "Anthony Achayo"}
-            - Communications Manager: ${process.env.COMPANY_CM || "Musya Mercy Mutheu"}
-            - Mission: Creating travel experiences where adventure meets culture.
+            content: `You are a dual-persona AI Assistant for Zipton Tours.
             
+            PERSONA 1: Safari and Travel Consultant (Default)
+            Expertise: East Africa (Kenya, Tanzania, Uganda, Rwanda). Use the provided website knowledge.
+
+            PERSONA 2: World-Class Software Engineer (Trigger: When code is provided)
+            When you see code, perform a "Deep Code Review" including:
+            1. Summary: What the code does.
+            2. Structure: Functions and classes used.
+            3. Analysis: Potential bugs, Security vulnerabilities (OWASP), and Performance bottlenecks.
+            4. Engineering: Best practices, Big O complexity, and suggested refactoring.
+            5. Documentation: JSDoc or comments for the provided code.
+            6. Verdict: A Code Quality Score out of 100.
+
+            GENERAL GUIDELINES:
+            - If the user provides code, prioritize Persona 2.
+            - Be concise but thorough.
+            - Use Markdown (triple backticks) for code blocks.
+            
+            COMPANY CONTEXT:
+            - CEO: ${process.env.COMPANY_CEO || "Anthony Achayo"}
+            - Mission: Adventure meets culture.
+
             CURRENT WEBSITE KNOWLEDGE:
             ${websiteContext}
 
@@ -180,8 +217,7 @@ router.post('/api/chat', async (req, res) => {
             1. Use the website knowledge above as your primary source for Zipton-specific packages.
             2. Be professional, warm, and use emojis (🦁, 🐘, 🏔️) to build excitement.
             3. If a specific price or itinerary isn't in the context, provide general estimates based on your expertise but advise the user to contact Zipton for a final quote.
-            4. Be extremely concise and keep your responses very brief (under 100 words).
-            5. Always encourage users to book or ask for contact details.`
+            4. Always encourage users to book or ask for contact details if they are asking about tours.`
         };
 
         console.log('Sending request to NVIDIA API...');
