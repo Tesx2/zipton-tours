@@ -185,12 +185,11 @@ function initSpeechRecognition() {
         };
 
         recognition.onresult = (event) => {
-            let transcript = "";
-            for (let i = 0; i < event.results.length; i++) {
-                transcript += event.results[i][0].transcript;
-            }
-
-            userInput.value = transcript;
+            // Use the latest result rather than re-concatenating everything
+            const lastResultIndex = event.results.length - 1;
+            const transcript = event.results[lastResultIndex][0].transcript;
+            
+            userInput.value = transcript; 
             recognition.speechReceived = true; // Mark that we heard something immediately
 
             if (event.results[event.results.length - 1].isFinal) {
@@ -217,8 +216,8 @@ function initSpeechRecognition() {
 
             let errorMessage = `Voice error: ${event.error}.`;
             if (event.error === 'audio-capture') {
-                errorMessage = "Microphone not detected. Check your hardware or OS privacy settings.";
-            } else if (event.error === 'not-allowed') {
+                errorMessage = "Microphone hardware error. Please ensure your mic is plugged in and not being used by another app (like Zoom).";
+            } else if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
                 errorMessage = "Microphone access denied. Click the lock icon in your address bar to allow.";
             }
 
