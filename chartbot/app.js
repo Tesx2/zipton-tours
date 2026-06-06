@@ -47,8 +47,12 @@ const knowledgeBase = {
         keywords: ["donate", "donation", "donations", "support", "give", "contribute", "money", "fund"],
         response: "Your donations directly support community projects! 💝\n\nWe fund:\n\n🍎 School meal programs\n💧 Clean water initiatives\n🏗️ School construction projects\n📚 Educational supplies\n\nEvery contribution counts. Visit our donations page or contact us to support Kenya's communities. Thank you for your generosity! 🙏"
     },
+    website: {
+        keywords: ["website", "site", "online", "listed", "page"],
+        response: "Yes! 🌐 All the tours and information I've mentioned are part of our official website. You can find full itineraries, photos, and prices by browsing the **Tours** section or visiting the homepage!"
+    },
     contact: {
-        keywords: ["contact", "whatsapp", "email", "phone", "call", "reach", "talk", "speak", "website", "sure", "real", "truth", "verify"],
+        keywords: ["contact", "whatsapp", "email", "phone", "call", "reach", "talk", "speak", "sure", "real", "truth", "verify"],
         response: "Get in touch with us!\n\n📱 WhatsApp: +254 700 000 000\n📧 Email: hello@ziptontours.co.ke\n📞 Phone: +254 20 123 4567\n🌐 Website: www.ziptontours.co.ke\n\nWe're here to help with all your travel questions!"
     },
     hours: {
