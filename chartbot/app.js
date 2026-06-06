@@ -212,12 +212,14 @@ function initSpeechRecognition() {
             console.error("Speech Recognition Error:", event.error);
             isListening = false;
             micButton.classList.remove("listening");
+            userInput.placeholder = placeholders[currentPlaceholder];
+            micButton.setAttribute("aria-label", "Start voice input");
 
             let errorMessage = `Voice error: ${event.error}.`;
             if (event.error === 'audio-capture') {
-                errorMessage = "Microphone not found or not working. Check your hardware.";
+                errorMessage = "Microphone not detected. Check your hardware or OS privacy settings.";
             } else if (event.error === 'not-allowed') {
-                errorMessage = "Microphone access denied. Please enable permissions in your browser settings.";
+                errorMessage = "Microphone access denied. Click the lock icon in your address bar to allow.";
             }
 
             voiceStatus.textContent = `${errorMessage} Please type your message.`;
