@@ -102,6 +102,9 @@ let isHighContrast = false;
 let voiceEnabled = true;
 let isListening = false;
 let recognition = null;
+let useFallbackRecorder = false;
+let mediaRecorder = null;
+let audioChunks = [];
 let synthesis = window.speechSynthesis;
 let chatHistory = []; // Stores the conversation for context
 
@@ -209,12 +212,21 @@ function initSpeechRecognition() {
             console.error("Speech Recognition Error:", event.error);
             isListening = false;
             micButton.classList.remove("listening");
-            voiceStatus.textContent = `Voice error: ${event.error}. Please type your message.`;
+
+            let errorMessage = `Voice error: ${event.error}.`;
+            if (event.error === 'audio-capture') {
+                errorMessage = "Microphone not found or not working. Check your hardware.";
+            } else if (event.error === 'not-allowed') {
+                errorMessage = "Microphone access denied. Please enable permissions in your browser settings.";
+            }
+
+            voiceStatus.textContent = `${errorMessage} Please type your message.`;
             setTimeout(() => { voiceStatus.textContent = ""; }, 5000); // Give user more time to read error
         };
     } else {
-        micButton.style.display = "none";
-        voiceStatus.textContent = "Speech recognition not supported in this browser. Please type your message.";
+        useFallbackRecorder = true;
+        micButton.title = "Click to record (Fallback Mode)";
+        console.info("SpeechRecognition not supported. Fallback recorder enabled.");
     }
 }
 
@@ -257,6 +269,88 @@ function speak(text) {
 
     synthesis.resume(); // Fixes a bug in Chrome where speech gets stuck
     synthesis.speak(utterance);
+}
+
+/**
+ * Fallback Recording Logic (MediaRecorder API)
+ */
+async function toggleFallbackRecording() {
+    if (isListening) {
+        stopFallbackRecording();
+    } else {
+        await startFallbackRecording();
+    }
+}
+
+async function startFallbackRecording() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) audioChunks.push(event.data);
+        };
+
+        mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            voiceStatus.textContent = "Transcribing your voice... ✨";
+            await sendAudioToTranscription(audioBlob);
+            stream.getTracks().forEach(track => track.stop());
+        };
+
+        mediaRecorder.start();
+        isListening = true;
+        micButton.classList.add("listening");
+        voiceStatus.textContent = "Recording... 🎤";
+        userInput.placeholder = "Recording audio...";
+    } catch (err) {
+        console.error("Fallback Recording Error:", err);
+        voiceStatus.textContent = "Could not access microphone.";
+    }
+}
+
+function stopFallbackRecording() {
+    if (mediaRecorder && isListening) {
+        mediaRecorder.stop();
+        isListening = false;
+        micButton.classList.remove("listening");
+        userInput.placeholder = placeholders[currentPlaceholder];
+    }
+}
+
+async function sendAudioToTranscription(audioBlob) {
+    try {
+        // Convert blob to base64 to send via JSON
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = async () => {
+            const base64Audio = reader.result.split(',')[1];
+            const TRANSCRIBE_ENDPOINT = API_ENDPOINT.replace('/chat', '/transcribe');
+
+            const response = await fetch(TRANSCRIBE_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ audio: base64Audio })
+            });
+
+            if (!response.ok) throw new Error("Transcription failed");
+
+            const data = await response.json();
+            if (data.text) {
+                userInput.value = data.text;
+                voiceStatus.textContent = `I heard: "${data.text}" ✨`;
+                setTimeout(() => {
+                    handleSend();
+                }, 800);
+            } else {
+                voiceStatus.textContent = "Could not understand audio. Try again.";
+            }
+        };
+    } catch (error) {
+        console.error("Transcription Error:", error);
+        voiceStatus.textContent = "Transcription service error.";
+    }
 }
 
 async function getBotResponse(userMessage) {
@@ -386,12 +480,12 @@ function cyclePlaceholder() {
 }
 
 micButton.addEventListener("click", () => {
-    if (!recognition) {
-        alert("Speech recognition is not supported in your browser. Please use Chrome or Edge.");
+    if (useFallbackRecorder) {
+        toggleFallbackRecording();
         return;
     }
 
-    if (isListening) {
+    if (isListening && recognition) {
         recognition.stop();
     } else {
         recognition.start();
