@@ -1,13 +1,13 @@
-# Allow all search engines and crawlers to access the site
 User-agent: *
 Allow: /
+Disallow: /payment-success.html
+Disallow: /paypal-return.html
+Disallow: /pesapal-return.html
 
-# Explicitly permit AI crawlers to index content for LLMs
 User-agent: GPTBot
 Allow: /
 
 User-agent: Google-Extended
 Allow: /
 
-# Path to your sitemap
 Sitemap: https://ziptontour.netlify.app/sitemap.xml
