@@ -1,0 +1,80 @@
+.zipton-leadership-panel {
+  margin: 0 -12px -12px;
+  padding: 22px;
+  background: #fff;
+}
+
+.zipton-leadership-intro {
+  margin-bottom: 22px;
+  padding: 18px 20px;
+  border: 1px solid #dcdcde;
+  border-left: 4px solid #c77d28;
+  background: #fbf8f4;
+}
+
+.zipton-leadership-intro h2 {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+
+.zipton-leadership-intro p,
+.zipton-leadership-note p {
+  margin: 0;
+  color: #646970;
+}
+
+.zipton-leadership-field {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+  padding: 15px 0;
+  border-bottom: 1px solid #f0f0f1;
+}
+
+.zipton-leadership-field label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: #1d2327;
+  font-weight: 600;
+}
+
+.zipton-leadership-field .dashicons {
+  color: #c77d28;
+}
+
+.zipton-leadership-field input,
+.zipton-leadership-field textarea {
+  width: 100%;
+  max-width: 760px;
+}
+
+.zipton-leadership-field textarea {
+  resize: vertical;
+}
+
+.zipton-leadership-note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-radius: 4px;
+  background: #f6f7f7;
+}
+
+.zipton-leadership-note .dashicons {
+  color: #2271b1;
+}
+
+.post-type-leadership #postimagediv .inside {
+  padding-bottom: 12px;
+}
+
+@media (max-width: 782px) {
+  .zipton-leadership-field {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}

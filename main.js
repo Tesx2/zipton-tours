@@ -136,6 +136,8 @@ if (year) {
 const apiBaseURL = "https://ziptontour.netlify.app/.netlify/functions/wp-posts";
 const apiURL = apiBaseURL;
 const toursApiURL = "https://ziptontour.netlify.app/.netlify/functions/wp-tours";
+const leadershipApiURL = "https://ziptontour.netlify.app/.netlify/functions/wp-leadership";
+const leadershipPlaceholderImage = "images/team/placeholder.jpg";
 
 function stripHTML(value = "") {
   const parser = new DOMParser();
@@ -157,8 +159,18 @@ function sanitizePostContent(value = "") {
   return documentValue.body.innerHTML;
 }
 
-function getFeaturedImage(post) {
-  return post._embedded?.["wp:featuredmedia"]?.[0]?.source_url || "https://via.placeholder.com/900x520";
+function escapeHTML(value = "") {
+  const element = document.createElement("textarea");
+  element.textContent = String(value);
+  return element.innerHTML;
+}
+
+function escapeAttribute(value = "") {
+  return escapeHTML(value).replace(/"/g, "&quot;");
+}
+
+function getFeaturedImage(post, fallback = "https://via.placeholder.com/900x520") {
+  return post._embedded?.["wp:featuredmedia"]?.[0]?.source_url || fallback;
 }
 
 function formatPostDate(dateValue) {
@@ -211,6 +223,116 @@ async function loadBlogPosts() {
 }
 
 loadBlogPosts();
+
+async function fetchLeadershipMembers() {
+  console.log("Leadership Endpoint:", leadershipApiURL);
+  const response = await fetch(leadershipApiURL);
+  if (!response.ok) {
+    const errorBody = await response.text();
+    console.log("Leadership HTTP Status:", response.status);
+    console.log("Leadership Error Body:", errorBody);
+    throw new Error(`WordPress API returned ${response.status}`);
+  }
+
+  const data = await response.json();
+  console.log("Leadership Response:", data);
+  return data;
+}
+
+function getLeadershipBiography(post) {
+  return getField(post, ["biography", "bio", "leadership_biography"]) || stripHTML(post.content?.rendered);
+}
+
+function normalizeLeadershipMember(post) {
+  const name = stripHTML(post.title?.rendered);
+  const position = getField(post, ["position", "job_title", "leadership_position"]);
+
+  return {
+    name,
+    position,
+    biography: getLeadershipBiography(post),
+    image: getFeaturedImage(post, leadershipPlaceholderImage),
+    displayOrder: Number(getField(post, ["display_order", "menu_order", "leadership_display_order"]) || post.menu_order || 0),
+    socialLinks: [
+      { label: "Facebook", url: getField(post, ["facebook_url", "facebook"]), icon: "images/icons/facebook.png" },
+      { label: "Instagram", url: getField(post, ["instagram_url", "instagram"]), icon: "images/icons/instagram.png" },
+      { label: "LinkedIn", url: getField(post, ["linkedin_url", "linkedin"]), icon: "images/icons/linkedin.png" },
+      { label: "TikTok", url: getField(post, ["tiktok_url", "tiktok"]), icon: "images/icons/tiktok.png" },
+      { label: "Twitter", url: getField(post, ["x_url", "twitter_url", "x_twitter_url", "twitter"]), icon: "images/icons/twitter.png" },
+      { label: "Website", shortLabel: "Web", url: getField(post, ["website_url", "website"]), icon: "" },
+      { label: "Email", shortLabel: "Mail", url: formatEmailLink(getField(post, ["email", "email_address"])), icon: "" }
+    ].filter((link) => link.url)
+  };
+}
+
+function formatEmailLink(value) {
+  if (!value) return "";
+  const email = String(value).trim();
+  return email.startsWith("mailto:") ? email : `mailto:${email}`;
+}
+
+function renderLeadershipSocialLinks(member) {
+  if (!member.socialLinks.length) return "";
+
+  return `
+    <div class="social-links" aria-label="${escapeAttribute(member.name)} social links">
+      ${member.socialLinks
+        .map((link) => `
+          <a href="${escapeAttribute(link.url)}" target="_blank" rel="noopener" aria-label="${escapeAttribute(link.label)}">
+            ${link.icon ? `<img src="${escapeAttribute(link.icon)}" alt="${escapeAttribute(link.label)} Icon">` : escapeHTML(link.shortLabel || link.label)}
+          </a>
+        `)
+        .join("")}
+    </div>
+  `;
+}
+
+function renderLeadershipCards(members) {
+  const container = document.querySelector("#leadership-container");
+  if (!container || !Array.isArray(members) || members.length === 0) return;
+
+  container.innerHTML = members
+    .map((member) => `
+      <article class="team-card reveal visible" data-team-name="${escapeAttribute(member.name)}">
+        <img src="${escapeAttribute(member.image)}" alt="Portrait of ${escapeAttribute(member.name)}" onerror="this.src='${leadershipPlaceholderImage}'; this.onerror=null;">
+        <div class="team-content">
+          <p class="card-kicker">${escapeHTML(member.position)}</p>
+          <h3>${escapeHTML(member.name)}</h3>
+          <p>${escapeHTML(member.biography)}</p>
+          ${renderLeadershipSocialLinks(member)}
+        </div>
+      </article>
+    `)
+    .join("");
+}
+
+async function loadLeadershipMembers() {
+  const container = document.querySelector("#leadership-container");
+  if (!container) return;
+
+  container.setAttribute("aria-busy", "true");
+
+  try {
+    const posts = await fetchLeadershipMembers();
+    if (!Array.isArray(posts) || posts.length === 0) {
+      container.innerHTML = "";
+      return;
+    }
+
+    const members = posts
+      .map(normalizeLeadershipMember)
+      .sort((first, second) => first.displayOrder - second.displayOrder);
+
+    renderLeadershipCards(members);
+  } catch (error) {
+    console.error("Failed to load leadership members:", error);
+    container.innerHTML = "";
+  } finally {
+    container.removeAttribute("aria-busy");
+  }
+}
+
+loadLeadershipMembers();
 
 async function loadSinglePost() {
   const postPage = document.querySelector(".single-post-page");
@@ -346,7 +468,7 @@ function toList(value) {
 }
 
 function getField(post, names) {
-  const sources = [post?.acf, post?.meta, post];
+  const sources = [post?.acf, post?.meta, post?.leadership_meta, post];
   for (const source of sources) {
     if (!source) continue;
     for (const name of names) {
@@ -767,45 +889,6 @@ if (mpesaForm && mpesaStatus) {
     }
   });
 }
-
-async function applyTeamImages() {
-  const teamCards = document.querySelectorAll(".team-card");
-  const placeholderSrc = "/images/team/placeholder.jpg";
-
-  let manifest = {};
-  try {
-    // Fetch the manifest once for all cards
-    const response = await fetch("/team-manifest.json");
-    if (response.ok) {
-      manifest = await response.json();
-    }
-  } catch (error) {
-    console.warn("Team manifest could not be loaded, falling back to placeholders.", error);
-  }
-
-  teamCards.forEach((card) => {
-    const img = card.querySelector("img");
-    const teamName = card.dataset.teamName?.trim();
-    if (!img || !teamName) return;
-
-    // Look up the filename in the manifest using the raw team name
-    const fileName = manifest[teamName];
-
-    if (fileName) {
-      img.src = `/images/team/${fileName}`;
-    } else {
-      img.src = placeholderSrc;
-    };
-
-    // Final safety fallback if the manifest entry itself points to a missing file
-    img.onerror = () => {
-      img.src = placeholderSrc;
-      img.onerror = null;
-    };
-  });
-}
-
-applyTeamImages();
 
 async function capturePayPalReturn() {
   const title = document.querySelector("#paypal-status-title");
