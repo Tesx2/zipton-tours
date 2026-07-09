@@ -1,0 +1,65 @@
+.zipton-partners-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.zipton-partners-intro {
+  padding: 18px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+}
+
+.zipton-partners-intro h2 {
+  margin: 0 0 6px;
+}
+
+.zipton-partners-intro p,
+.zipton-partners-note p {
+  margin: 0;
+}
+
+.zipton-partners-field {
+  display: grid;
+  grid-template-columns: minmax(160px, 220px) minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+}
+
+.zipton-partners-field label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-weight: 700;
+}
+
+.zipton-partners-field input[type="text"],
+.zipton-partners-field input[type="url"],
+.zipton-partners-field input[type="number"],
+.zipton-partners-field select,
+.zipton-partners-field textarea {
+  width: 100%;
+}
+
+.zipton-partners-field textarea {
+  min-height: 90px;
+}
+
+.zipton-partners-note {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 14px;
+  background: #f8fafc;
+  border-left: 4px solid #f59e0b;
+}
+
+.post-type-partners #postimagediv .inside {
+  padding-top: 12px;
+}
+
+@media (max-width: 782px) {
+  .zipton-partners-field {
+    grid-template-columns: 1fr;
+  }
+}

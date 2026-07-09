@@ -137,7 +137,9 @@ const apiBaseURL = "https://ziptontour.netlify.app/.netlify/functions/wp-posts";
 const apiURL = apiBaseURL;
 const toursApiURL = "https://ziptontour.netlify.app/.netlify/functions/wp-tours";
 const leadershipApiURL = "https://ziptontour.netlify.app/.netlify/functions/wp-leadership";
+const partnersApiURL = "https://ziptontour.netlify.app/.netlify/functions/wp-partners";
 const leadershipPlaceholderImage = "images/team/placeholder.jpg";
+const partnerPlaceholderImage = "images/team/placeholder.jpg";
 
 function stripHTML(value = "") {
   const parser = new DOMParser();
@@ -334,6 +336,107 @@ async function loadLeadershipMembers() {
 
 loadLeadershipMembers();
 
+async function fetchPartners() {
+  const response = await fetch(partnersApiURL);
+  if (!response.ok) {
+    throw new Error(`WordPress API returned ${response.status}`);
+  }
+
+  return response.json();
+}
+
+function normalizePartner(post) {
+  const companyName = stripHTML(post.title?.rendered);
+  const category = getField(post, ["category", "partner_category"]);
+  const description = getField(post, ["short_description", "description", "partner_description"]) || stripHTML(post.excerpt?.rendered || post.content?.rendered);
+  const websiteUrl = getField(post, ["website_url", "website"]);
+  const partnerSince = getField(post, ["partner_since", "since"]);
+
+  return {
+    companyName,
+    category,
+    description,
+    websiteUrl,
+    partnerSince,
+    featuredPartner: Boolean(Number(getField(post, ["featured_partner", "featured"]) || 0)),
+    displayOrder: Number(getField(post, ["display_order", "menu_order", "partner_display_order"]) || post.menu_order || 0),
+    logo: getFeaturedImage(post, partnerPlaceholderImage),
+    socialLinks: [
+      { label: "Facebook", url: getField(post, ["facebook_url", "facebook"]), icon: "images/icons/facebook.png" },
+      { label: "Instagram", url: getField(post, ["instagram_url", "instagram"]), icon: "images/icons/instagram.png" },
+      { label: "LinkedIn", url: getField(post, ["linkedin_url", "linkedin"]), icon: "images/icons/linkedin.png" },
+      { label: "Twitter", url: getField(post, ["x_url", "twitter_url", "x_twitter_url", "twitter"]), icon: "images/icons/twitter.png" }
+    ].filter((link) => link.url)
+  };
+}
+
+function renderPartnerSocialLinks(partner) {
+  if (!partner.socialLinks.length) return "";
+
+  return `
+    <div class="social-links" aria-label="${escapeAttribute(partner.companyName)} social links">
+      ${partner.socialLinks
+        .map((link) => `
+          <a href="${escapeAttribute(link.url)}" target="_blank" rel="noopener" aria-label="${escapeAttribute(link.label)}">
+            <img src="${escapeAttribute(link.icon)}" alt="${escapeAttribute(link.label)} Icon">
+          </a>
+        `)
+        .join("")}
+    </div>
+  `;
+}
+
+function renderPartnerCards(partners) {
+  const container = document.querySelector("#partners-container");
+  if (!container || !Array.isArray(partners) || partners.length === 0) return;
+
+  container.innerHTML = partners
+    .map((partner) => `
+      <article class="partner-card reveal visible${partner.featuredPartner ? " featured-partner" : ""}">
+        <div class="partner-logo">
+          <img src="${escapeAttribute(partner.logo)}" alt="${escapeAttribute(partner.companyName)} logo" onerror="this.src='${partnerPlaceholderImage}'; this.onerror=null;">
+        </div>
+        <div class="partner-content">
+          ${partner.category ? `<p class="card-kicker">${escapeHTML(partner.category)}</p>` : ""}
+          <h3>${escapeHTML(partner.companyName)}</h3>
+          ${partner.description ? `<p>${escapeHTML(partner.description)}</p>` : ""}
+          ${partner.partnerSince ? `<p class="partner-since">Partner since ${escapeHTML(partner.partnerSince)}</p>` : ""}
+          ${partner.websiteUrl ? `<a class="btn btn-primary partner-website" href="${escapeAttribute(partner.websiteUrl)}" target="_blank" rel="noopener">Visit Website</a>` : ""}
+          ${renderPartnerSocialLinks(partner)}
+        </div>
+      </article>
+    `)
+    .join("");
+}
+
+async function loadPartners() {
+  const container = document.querySelector("#partners-container");
+  if (!container) return;
+
+  container.setAttribute("aria-busy", "true");
+
+  try {
+    const posts = await fetchPartners();
+    if (!Array.isArray(posts) || posts.length === 0) {
+      container.innerHTML = "";
+      return;
+    }
+
+    const partners = posts
+      .map(normalizePartner)
+      .sort((first, second) => first.displayOrder - second.displayOrder);
+
+    renderPartnerCards(partners);
+  } catch (error) {
+    console.error("Failed to load partners:", error);
+    container.innerHTML = "";
+  } finally {
+    container.removeAttribute("aria-busy");
+  }
+}
+
+loadPartners();
+
 async function loadSinglePost() {
   const postPage = document.querySelector(".single-post-page");
   if (!postPage) return;
@@ -468,7 +571,7 @@ function toList(value) {
 }
 
 function getField(post, names) {
-  const sources = [post?.acf, post?.meta, post?.leadership_meta, post];
+  const sources = [post?.acf, post?.meta, post?.leadership_meta, post?.partner_meta, post];
   for (const source of sources) {
     if (!source) continue;
     for (const name of names) {
