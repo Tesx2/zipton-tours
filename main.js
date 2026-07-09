@@ -308,7 +308,7 @@ function renderLeadershipCards(members) {
           <p class="card-kicker">${escapeHTML(member.position)}</p>
           <h3>${escapeHTML(member.name)}</h3>
           <p class="card-description clamp-text">${escapeHTML(member.biography)}</p>
-          <button class="btn btn-primary card-read-more" type="button" data-modal-type="leadership" data-modal-index="${index}">Read More</button>
+          <a class="card-read-more" href="#profile-modal" data-modal-type="leadership" data-modal-index="${index}">Read more</a>
           ${renderLeadershipSocialLinks(member)}
         </div>
       </article>
@@ -410,7 +410,7 @@ function renderPartnerCards(partners) {
           <h3>${escapeHTML(partner.companyName)}</h3>
           ${partner.description ? `<p class="card-description clamp-text">${escapeHTML(partner.description)}</p>` : ""}
           ${partner.partnerSince ? `<p class="partner-since">Partner since ${escapeHTML(partner.partnerSince)}</p>` : ""}
-          <button class="btn btn-primary card-read-more" type="button" data-modal-type="partners" data-modal-index="${index}">Read More</button>
+          <a class="card-read-more" href="#profile-modal" data-modal-type="partners" data-modal-index="${index}">Read more</a>
           ${partner.websiteUrl ? `<a class="btn btn-primary partner-website" href="${escapeAttribute(partner.websiteUrl)}" target="_blank" rel="noopener">Visit Website</a>` : ""}
           ${renderPartnerSocialLinks(partner)}
         </div>
@@ -532,9 +532,10 @@ function closeProfileModal() {
 }
 
 document.addEventListener("click", (event) => {
-  const readMoreButton = event.target.closest("[data-modal-type][data-modal-index]");
-  if (readMoreButton) {
-    openProfileModal(readMoreButton.dataset.modalType, readMoreButton.dataset.modalIndex, readMoreButton);
+  const readMoreLink = event.target.closest("[data-modal-type][data-modal-index]");
+  if (readMoreLink) {
+    event.preventDefault();
+    openProfileModal(readMoreLink.dataset.modalType, readMoreLink.dataset.modalIndex, readMoreLink);
     return;
   }
 

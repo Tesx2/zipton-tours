@@ -1153,8 +1153,26 @@ h1 {
 }
 
 .card-read-more {
+  display: inline-block;
+  align-self: flex-start;
   width: fit-content;
-  margin-top: auto;
+  margin-top: 12px;
+  color: #f19021;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.card-read-more:hover {
+  color: #cf7414;
+  text-decoration: underline;
+}
+
+.card-read-more:focus-visible {
+  outline: 2px solid #f19021;
+  outline-offset: 3px;
+  border-radius: 2px;
 }
 
 .partner-website {
