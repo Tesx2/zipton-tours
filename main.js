@@ -409,8 +409,8 @@ function renderPartnerCards(partners) {
           ${partner.category ? `<p class="card-kicker">${escapeHTML(partner.category)}</p>` : ""}
           <h3>${escapeHTML(partner.companyName)}</h3>
           ${partner.description ? `<p class="card-description clamp-text">${escapeHTML(partner.description)}</p>` : ""}
-          ${partner.partnerSince ? `<p class="partner-since">Partner since ${escapeHTML(partner.partnerSince)}</p>` : ""}
           <a class="card-read-more" href="#profile-modal" data-modal-type="partners" data-modal-index="${index}">Read more</a>
+          ${partner.partnerSince ? `<p class="partner-since">Partner since ${escapeHTML(partner.partnerSince)}</p>` : ""}
           ${partner.websiteUrl ? `<a class="btn btn-primary partner-website" href="${escapeAttribute(partner.websiteUrl)}" target="_blank" rel="noopener">Visit Website</a>` : ""}
           ${renderPartnerSocialLinks(partner)}
         </div>
