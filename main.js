@@ -233,17 +233,12 @@ async function loadBlogPosts() {
 loadBlogPosts();
 
 async function fetchLeadershipMembers() {
-  console.log("Leadership Endpoint:", leadershipApiURL);
   const response = await fetch(leadershipApiURL);
   if (!response.ok) {
-    const errorBody = await response.text();
-    console.log("Leadership HTTP Status:", response.status);
-    console.log("Leadership Error Body:", errorBody);
     throw new Error(`WordPress API returned ${response.status}`);
   }
 
   const data = await response.json();
-  console.log("Leadership Response:", data);
   return data;
 }
 
