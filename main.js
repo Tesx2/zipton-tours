@@ -140,6 +140,12 @@ const leadershipApiURL = "https://ziptontour.netlify.app/.netlify/functions/wp-l
 const partnersApiURL = "https://ziptontour.netlify.app/.netlify/functions/wp-partners";
 const leadershipPlaceholderImage = "images/team/placeholder.jpg";
 const partnerPlaceholderImage = "images/team/placeholder.jpg";
+const dynamicProfileState = {
+  leadership: [],
+  partners: []
+};
+let activeModalTrigger = null;
+let modalScrollY = 0;
 
 function stripHTML(value = "") {
   const parser = new DOMParser();
@@ -248,11 +254,13 @@ function getLeadershipBiography(post) {
 function normalizeLeadershipMember(post) {
   const name = stripHTML(post.title?.rendered);
   const position = getField(post, ["position", "job_title", "leadership_position"]);
+  const email = getField(post, ["email", "email_address"]);
 
   return {
     name,
     position,
     biography: getLeadershipBiography(post),
+    email,
     image: getFeaturedImage(post, leadershipPlaceholderImage),
     displayOrder: Number(getField(post, ["display_order", "menu_order", "leadership_display_order"]) || post.menu_order || 0),
     socialLinks: [
@@ -261,8 +269,7 @@ function normalizeLeadershipMember(post) {
       { label: "LinkedIn", url: getField(post, ["linkedin_url", "linkedin"]), icon: "images/icons/linkedin.png" },
       { label: "TikTok", url: getField(post, ["tiktok_url", "tiktok"]), icon: "images/icons/tiktok.png" },
       { label: "Twitter", url: getField(post, ["x_url", "twitter_url", "x_twitter_url", "twitter"]), icon: "images/icons/twitter.png" },
-      { label: "Website", shortLabel: "Web", url: getField(post, ["website_url", "website"]), icon: "" },
-      { label: "Email", shortLabel: "Mail", url: formatEmailLink(getField(post, ["email", "email_address"])), icon: "" }
+      { label: "Website", shortLabel: "Web", url: getField(post, ["website_url", "website"]), icon: "" }
     ].filter((link) => link.url)
   };
 }
@@ -294,13 +301,14 @@ function renderLeadershipCards(members) {
   if (!container || !Array.isArray(members) || members.length === 0) return;
 
   container.innerHTML = members
-    .map((member) => `
+    .map((member, index) => `
       <article class="team-card reveal visible" data-team-name="${escapeAttribute(member.name)}">
         <img src="${escapeAttribute(member.image)}" alt="Portrait of ${escapeAttribute(member.name)}" onerror="this.src='${leadershipPlaceholderImage}'; this.onerror=null;">
         <div class="team-content">
           <p class="card-kicker">${escapeHTML(member.position)}</p>
           <h3>${escapeHTML(member.name)}</h3>
-          <p>${escapeHTML(member.biography)}</p>
+          <p class="card-description clamp-text">${escapeHTML(member.biography)}</p>
+          <button class="btn btn-primary card-read-more" type="button" data-modal-type="leadership" data-modal-index="${index}">Read More</button>
           ${renderLeadershipSocialLinks(member)}
         </div>
       </article>
@@ -325,6 +333,7 @@ async function loadLeadershipMembers() {
       .map(normalizeLeadershipMember)
       .sort((first, second) => first.displayOrder - second.displayOrder);
 
+    dynamicProfileState.leadership = members;
     renderLeadershipCards(members);
   } catch (error) {
     console.error("Failed to load leadership members:", error);
@@ -391,7 +400,7 @@ function renderPartnerCards(partners) {
   if (!container || !Array.isArray(partners) || partners.length === 0) return;
 
   container.innerHTML = partners
-    .map((partner) => `
+    .map((partner, index) => `
       <article class="partner-card reveal visible${partner.featuredPartner ? " featured-partner" : ""}">
         <div class="partner-logo">
           <img src="${escapeAttribute(partner.logo)}" alt="${escapeAttribute(partner.companyName)} logo" onerror="this.src='${partnerPlaceholderImage}'; this.onerror=null;">
@@ -399,8 +408,9 @@ function renderPartnerCards(partners) {
         <div class="partner-content">
           ${partner.category ? `<p class="card-kicker">${escapeHTML(partner.category)}</p>` : ""}
           <h3>${escapeHTML(partner.companyName)}</h3>
-          ${partner.description ? `<p>${escapeHTML(partner.description)}</p>` : ""}
+          ${partner.description ? `<p class="card-description clamp-text">${escapeHTML(partner.description)}</p>` : ""}
           ${partner.partnerSince ? `<p class="partner-since">Partner since ${escapeHTML(partner.partnerSince)}</p>` : ""}
+          <button class="btn btn-primary card-read-more" type="button" data-modal-type="partners" data-modal-index="${index}">Read More</button>
           ${partner.websiteUrl ? `<a class="btn btn-primary partner-website" href="${escapeAttribute(partner.websiteUrl)}" target="_blank" rel="noopener">Visit Website</a>` : ""}
           ${renderPartnerSocialLinks(partner)}
         </div>
@@ -426,6 +436,7 @@ async function loadPartners() {
       .map(normalizePartner)
       .sort((first, second) => first.displayOrder - second.displayOrder);
 
+    dynamicProfileState.partners = partners;
     renderPartnerCards(partners);
   } catch (error) {
     console.error("Failed to load partners:", error);
@@ -436,6 +447,127 @@ async function loadPartners() {
 }
 
 loadPartners();
+
+function getFocusableElements(container) {
+  return [...container.querySelectorAll("a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex='-1'])")];
+}
+
+function renderModalSocialLinks(label, socialLinks = []) {
+  if (!socialLinks.length) return "";
+
+  return `
+    <div class="social-links" aria-label="${escapeAttribute(label)} social links">
+      ${socialLinks
+        .map((link) => `
+          <a href="${escapeAttribute(link.url)}" target="_blank" rel="noopener" aria-label="${escapeAttribute(link.label)}">
+            ${link.icon ? `<img src="${escapeAttribute(link.icon)}" alt="${escapeAttribute(link.label)} Icon">` : escapeHTML(link.shortLabel || link.label)}
+          </a>
+        `)
+        .join("")}
+    </div>
+  `;
+}
+
+function buildLeadershipModal(member) {
+  return `
+    <div class="profile-modal-media profile-modal-media-portrait">
+      <img src="${escapeAttribute(member.image)}" alt="Portrait of ${escapeAttribute(member.name)}" onerror="this.src='${leadershipPlaceholderImage}'; this.onerror=null;">
+    </div>
+    <div class="profile-modal-copy">
+      <p class="card-kicker">${escapeHTML(member.position)}</p>
+      <h2 id="profile-modal-title">${escapeHTML(member.name)}</h2>
+      <p>${escapeHTML(member.biography)}</p>
+      ${member.email ? `<a class="profile-modal-email" href="${escapeAttribute(formatEmailLink(member.email))}">${escapeHTML(member.email)}</a>` : ""}
+      ${renderModalSocialLinks(member.name, member.socialLinks)}
+    </div>
+  `;
+}
+
+function buildPartnerModal(partner) {
+  return `
+    <div class="profile-modal-media profile-modal-media-logo">
+      <img src="${escapeAttribute(partner.logo)}" alt="${escapeAttribute(partner.companyName)} logo" onerror="this.src='${partnerPlaceholderImage}'; this.onerror=null;">
+    </div>
+    <div class="profile-modal-copy">
+      ${partner.category ? `<p class="card-kicker">${escapeHTML(partner.category)}</p>` : ""}
+      <h2 id="profile-modal-title">${escapeHTML(partner.companyName)}</h2>
+      ${partner.description ? `<p>${escapeHTML(partner.description)}</p>` : ""}
+      ${partner.partnerSince ? `<p class="partner-since">Partner since ${escapeHTML(partner.partnerSince)}</p>` : ""}
+      ${partner.websiteUrl ? `<a class="btn btn-primary partner-website" href="${escapeAttribute(partner.websiteUrl)}" target="_blank" rel="noopener">Visit Website</a>` : ""}
+      ${renderModalSocialLinks(partner.companyName, partner.socialLinks)}
+    </div>
+  `;
+}
+
+function openProfileModal(type, index, trigger) {
+  const modal = document.querySelector("#profile-modal");
+  const dialog = modal?.querySelector(".profile-modal-dialog");
+  const content = document.querySelector("#profile-modal-content");
+  const item = dynamicProfileState[type]?.[Number(index)];
+  if (!modal || !dialog || !content || !item) return;
+
+  activeModalTrigger = trigger || document.activeElement;
+  content.innerHTML = type === "leadership" ? buildLeadershipModal(item) : buildPartnerModal(item);
+  modalScrollY = window.scrollY;
+  document.body.style.top = `-${modalScrollY}px`;
+  document.body.classList.add("modal-open");
+  modal.setAttribute("aria-hidden", "false");
+  dialog.focus();
+}
+
+function closeProfileModal() {
+  const modal = document.querySelector("#profile-modal");
+  const content = document.querySelector("#profile-modal-content");
+  if (!modal || modal.getAttribute("aria-hidden") === "true") return;
+
+  modal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("modal-open");
+  document.body.style.top = "";
+  window.scrollTo(0, modalScrollY);
+  if (content) content.innerHTML = "";
+  if (activeModalTrigger && typeof activeModalTrigger.focus === "function") {
+    activeModalTrigger.focus();
+  }
+  activeModalTrigger = null;
+}
+
+document.addEventListener("click", (event) => {
+  const readMoreButton = event.target.closest("[data-modal-type][data-modal-index]");
+  if (readMoreButton) {
+    openProfileModal(readMoreButton.dataset.modalType, readMoreButton.dataset.modalIndex, readMoreButton);
+    return;
+  }
+
+  if (event.target.closest("[data-modal-close]")) {
+    closeProfileModal();
+  }
+});
+
+document.addEventListener("keydown", (event) => {
+  const modal = document.querySelector("#profile-modal");
+  if (!modal || modal.getAttribute("aria-hidden") === "true") return;
+
+  if (event.key === "Escape") {
+    closeProfileModal();
+    return;
+  }
+
+  if (event.key !== "Tab") return;
+
+  const focusableElements = getFocusableElements(modal);
+  if (!focusableElements.length) return;
+
+  const firstElement = focusableElements[0];
+  const lastElement = focusableElements[focusableElements.length - 1];
+
+  if (event.shiftKey && document.activeElement === firstElement) {
+    event.preventDefault();
+    lastElement.focus();
+  } else if (!event.shiftKey && document.activeElement === lastElement) {
+    event.preventDefault();
+    firstElement.focus();
+  }
+});
 
 async function loadSinglePost() {
   const postPage = document.querySelector(".single-post-page");
