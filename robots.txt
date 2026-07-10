@@ -1,5 +1,8 @@
 User-agent: *
 Allow: /
+Disallow: /chartbot/
+Disallow: /netlify/
+Disallow: /wordpress-plugins/
 Disallow: /payment-success.html
 Disallow: /paypal-return.html
 Disallow: /pesapal-return.html

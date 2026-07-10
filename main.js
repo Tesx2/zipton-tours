@@ -138,12 +138,56 @@ const apiURL = apiBaseURL;
 const toursApiURL = "https://ziptontour.netlify.app/.netlify/functions/wp-tours";
 const leadershipApiURL = "https://ziptontour.netlify.app/.netlify/functions/wp-leadership";
 const partnersApiURL = "https://ziptontour.netlify.app/.netlify/functions/wp-partners";
+const siteBaseURL = "https://ziptontour.netlify.app";
+const defaultShareImage = `${siteBaseURL}/images/logo-main.png`;
+const googleBusinessProfileURL = "https://www.google.com/search?sca_esv=a58e26e22b62a0d5&biw=2049&bih=967&sxsrf=APpeQntWHCJA9NREktnVjhPOnc_crT1nLA:1783668948895&kgmid=/g/11zc2rm0t1&q=Zipton+Tours&shem=dlvs1,epsd1,ltae,rimspwouoe&shndl=30&source=sh/x/loc/uni/m1/1&kgs=55c36503fb03da83&utm_source=dlvs1,epsd1,ltae,rimspwouoe,sh/x/loc/uni/m1/1";
 const leadershipPlaceholderImage = "images/team/placeholder.jpg";
 const partnerPlaceholderImage = "images/team/placeholder.jpg";
 const dynamicProfileState = {
   leadership: [],
   partners: []
 };
+
+function setMeta(selector, value, attribute = "content") {
+  const element = document.head.querySelector(selector);
+  if (element && value) element.setAttribute(attribute, value);
+}
+
+function upsertLink(rel, href) {
+  let link = document.head.querySelector(`link[rel="${rel}"]`);
+  if (!link) {
+    link = document.createElement("link");
+    link.setAttribute("rel", rel);
+    document.head.appendChild(link);
+  }
+  link.setAttribute("href", href);
+}
+
+function upsertJsonLd(id, graph) {
+  let script = document.getElementById(id);
+  if (!script) {
+    script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.id = id;
+    document.head.appendChild(script);
+  }
+  script.textContent = JSON.stringify(graph);
+}
+
+function updatePageSeo({ title, description, url, image = defaultShareImage, type = "website", schema }) {
+  if (title) document.title = title;
+  setMeta('meta[name="description"]', description);
+  setMeta('meta[property="og:title"]', title);
+  setMeta('meta[property="og:description"]', description);
+  setMeta('meta[property="og:url"]', url);
+  setMeta('meta[property="og:image"]', image);
+  setMeta('meta[property="og:type"]', type);
+  setMeta('meta[name="twitter:title"]', title);
+  setMeta('meta[name="twitter:description"]', description);
+  setMeta('meta[name="twitter:image"]', image);
+  upsertLink("canonical", url);
+  if (schema) upsertJsonLd("dynamic-seo-schema", schema);
+}
 let activeModalTrigger = null;
 let modalScrollY = 0;
 
@@ -594,12 +638,38 @@ async function loadSinglePost() {
 
     const post = await response.json();
     const title = stripHTML(post.title?.rendered);
+    const excerpt = stripHTML(post.excerpt?.rendered || "").slice(0, 155) || "Read Zipton Tours Kenya travel stories, destination guides, and cultural travel inspiration.";
     const featuredImage = getFeaturedImage(post);
+    const postURL = `${siteBaseURL}/single-post.html?id=${encodeURIComponent(postId)}`;
 
-    document.title = `${title} | Zipton Tours`;
+    updatePageSeo({
+      title: `${title} | Zipton Tours`,
+      description: excerpt,
+      url: postURL,
+      image: featuredImage,
+      type: "article",
+      schema: {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": title,
+        "description": excerpt,
+        "image": featuredImage,
+        "datePublished": post.date,
+        "dateModified": post.modified || post.date,
+        "mainEntityOfPage": postURL,
+        "publisher": {
+          "@type": "Organization",
+          "name": "Zipton Tours",
+          "logo": {
+            "@type": "ImageObject",
+            "url": `${siteBaseURL}/images/logo-main.png`
+          }
+        }
+      }
+    });
     titleElement.textContent = title;
     metaElement.textContent = formatPostDate(post.date) || "Zipton Tours";
-    imageElement.innerHTML = `<img src="${featuredImage}" alt="${title}">`;
+    imageElement.innerHTML = `<img src="${featuredImage}" alt="${title}" loading="eager" decoding="async" fetchpriority="high">`;
     contentElement.innerHTML = sanitizePostContent(post.content?.rendered);
   } catch (error) {
     console.error("Failed to load post:", error);
@@ -889,7 +959,38 @@ loadWordPressToursList();
 function applyTourDetail(tour, selectedSlug) {
   if (!tour) return;
 
-  document.title = `${tour.title} | Zipton Tours`;
+  const tourURL = `${siteBaseURL}/tour-detail.html?tour=${encodeURIComponent(selectedSlug)}`;
+  const tourDescription = `${tour.summary} View itinerary highlights, inclusions, and booking options with Zipton Tours.`.slice(0, 160);
+
+  updatePageSeo({
+    title: `${tour.title} | Zipton Tours`,
+    description: tourDescription,
+    url: tourURL,
+    image: tour.image,
+    type: "product",
+    schema: {
+      "@context": "https://schema.org",
+      "@type": "TouristTrip",
+      "name": tour.title,
+      "description": tourDescription,
+      "image": tour.image,
+      "url": tourURL,
+      "provider": {
+        "@type": "TravelAgency",
+        "name": "Zipton Tours",
+        "url": `${siteBaseURL}/`,
+        "sameAs": googleBusinessProfileURL
+      },
+      "touristType": ["Safari travelers", "Cultural travelers", "Adventure travelers"],
+      "areaServed": "Kenya",
+      "offers": {
+        "@type": "Offer",
+        "priceCurrency": "KES",
+        "availability": "https://schema.org/InStock",
+        "url": tourURL
+      }
+    }
+  });
   document.querySelector("#tour-category").textContent = tour.category;
   document.querySelector("#tour-title").textContent = tour.title;
   document.querySelector("#tour-summary").textContent = tour.summary;
@@ -897,7 +998,7 @@ function applyTourDetail(tour, selectedSlug) {
   document.querySelector("#tour-price").textContent = tour.price;
   document.querySelector("#booking-title").textContent = `Book ${tour.title}`;
   document.querySelector("#tour-detail-hero").style.backgroundImage = `linear-gradient(90deg, rgba(0, 0, 0, 0.82), rgba(74, 43, 31, 0.62)), url("${tour.image}")`;
-  document.querySelector("#tour-detail-image").innerHTML = `<img src="${tour.image}" alt="${tour.title}">`;
+  document.querySelector("#tour-detail-image").innerHTML = `<img src="${tour.image}" alt="${tour.title}" loading="eager" decoding="async" fetchpriority="high">`;
   document.querySelector("#tour-quick-facts").innerHTML = tour.facts.map((fact) => `<span>${fact}</span>`).join("");
   document.querySelector("#tour-highlights").innerHTML = tour.highlights.map((item) => `<li>${item}</li>`).join("") || "<li>Custom planning with Zipton Tours</li>";
   document.querySelector("#tour-includes").innerHTML = tour.includes.map((item) => `<li>${item}</li>`).join("") || "<li>Pre-trip consultation and booking support</li>";

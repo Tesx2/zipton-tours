@@ -14,6 +14,18 @@
   box-sizing: border-box;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -467,6 +479,41 @@ h1 {
 .value-card h3 {
   margin-bottom: 10px;
   font-size: 1.25rem;
+}
+
+.faq-section {
+  background: var(--background);
+}
+
+.faq-list {
+  display: grid;
+  gap: 12px;
+  max-width: 900px;
+}
+
+.faq-item {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 16px 42px rgba(74, 43, 31, 0.08);
+}
+
+.faq-item summary {
+  cursor: pointer;
+  padding: 20px 24px;
+  color: var(--dark);
+  font-weight: 800;
+}
+
+.faq-item summary:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 3px;
+}
+
+.faq-item p {
+  margin: 0;
+  padding: 0 24px 22px;
+  color: rgba(91, 55, 22, 0.82);
 }
 
 .feature-panel {
