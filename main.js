@@ -138,6 +138,7 @@ const apiURL = apiBaseURL;
 const toursApiURL = "https://ziptontour.netlify.app/.netlify/functions/wp-tours";
 const leadershipApiURL = "https://ziptontour.netlify.app/.netlify/functions/wp-leadership";
 const partnersApiURL = "https://ziptontour.netlify.app/.netlify/functions/wp-partners";
+const socialFeedApiURL = "https://ziptontour.netlify.app/.netlify/functions/wp-social-feed";
 const siteBaseURL = "https://ziptontour.netlify.app";
 const defaultShareImage = `${siteBaseURL}/images/logo-main.png`;
 const googleBusinessProfileURL = "https://www.google.com/search?sca_esv=a58e26e22b62a0d5&biw=2049&bih=967&sxsrf=APpeQntWHCJA9NREktnVjhPOnc_crT1nLA:1783668948895&kgmid=/g/11zc2rm0t1&q=Zipton+Tours&shem=dlvs1,epsd1,ltae,rimspwouoe&shndl=30&source=sh/x/loc/uni/m1/1&kgs=55c36503fb03da83&utm_source=dlvs1,epsd1,ltae,rimspwouoe,sh/x/loc/uni/m1/1";
@@ -683,6 +684,181 @@ async function loadSinglePost() {
 }
 
 loadSinglePost();
+
+const platformIcons = {
+  Facebook: "images/icons/facebook.png",
+  Instagram: "images/icons/instagram.png",
+  TikTok: "images/icons/tiktok.png",
+  LinkedIn: "images/icons/linkedin.png",
+  X: "images/icons/twitter.png"
+};
+
+function formatFeedDate(dateValue) {
+  const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("en-KE", {
+    year: "numeric",
+    month: "short",
+    day: "numeric"
+  });
+}
+
+function getSocialFeedMeta(post) {
+  return post?.social_feed_meta || post?.acf || post?.meta || {};
+}
+
+function normalizeSocialFeedItem(post) {
+  const meta = getSocialFeedMeta(post);
+  const platform = meta.platform || getField(post, ["platform"]) || "Facebook";
+  const description = meta.short_description || getField(post, ["short_description"]) || stripHTML(post.excerpt?.rendered || post.content?.rendered);
+  const externalUrl = meta.external_url || getField(post, ["external_url"]) || post.link || "#";
+
+  return {
+    title: stripHTML(post.title?.rendered),
+    platform,
+    description,
+    externalUrl,
+    image: getFeaturedImage(post, defaultShareImage),
+    date: post.date,
+    featuredPinned: Boolean(meta.featured_pinned || getField(post, ["featured_pinned"])),
+    displayOrder: Number(meta.display_order || getField(post, ["display_order"]) || post.menu_order || 0)
+  };
+}
+
+function renderSocialFeed(items) {
+  const container = document.querySelector("#social-feed");
+  if (!container) return;
+
+  if (!items.length) {
+    container.innerHTML = `
+      <article class="feed-card">
+        <div class="feed-body">
+          <p class="eyebrow">No updates yet</p>
+          <h3>Fresh Zipton Tours updates will appear here soon.</h3>
+          <p>Social Feed items are managed from WordPress and displayed here automatically.</p>
+        </div>
+      </article>
+    `;
+    return;
+  }
+
+  container.innerHTML = items.map((item) => {
+    const icon = platformIcons[item.platform];
+    const iconHTML = icon
+      ? `<img class="platform-icon" src="${escapeAttribute(icon)}" alt="" loading="lazy" decoding="async">`
+      : `<span class="follow-badge" aria-hidden="true">${escapeHTML(item.platform.slice(0, 2).toUpperCase())}</span>`;
+
+    return `
+      <article class="feed-card reveal visible${item.featuredPinned ? " pinned" : ""}">
+        <a class="feed-media" href="${escapeAttribute(item.externalUrl)}" target="_blank" rel="noopener" aria-label="View ${escapeAttribute(item.title)} on ${escapeAttribute(item.platform)}">
+          <img src="${escapeAttribute(item.image)}" alt="${escapeAttribute(item.title)}" loading="lazy" decoding="async">
+        </a>
+        <div class="feed-body">
+          <div class="feed-meta">
+            <span class="platform-chip">${iconHTML}${escapeHTML(item.platform)}</span>
+            ${item.date ? `<time datetime="${escapeAttribute(item.date)}">${escapeHTML(formatFeedDate(item.date))}</time>` : ""}
+            ${item.featuredPinned ? `<span class="feed-pin">Pinned</span>` : ""}
+          </div>
+          <h3>${escapeHTML(item.title)}</h3>
+          ${item.description ? `<p>${escapeHTML(item.description)}</p>` : ""}
+          <a class="btn btn-primary feed-link" href="${escapeAttribute(item.externalUrl)}" target="_blank" rel="noopener">View on ${escapeHTML(item.platform)}</a>
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
+async function loadSocialFeed() {
+  const container = document.querySelector("#social-feed");
+  if (!container) return;
+
+  try {
+    const response = await fetch(socialFeedApiURL);
+    if (!response.ok) throw new Error(`WordPress API returned ${response.status}`);
+
+    const posts = await response.json();
+    const items = Array.isArray(posts)
+      ? posts.map(normalizeSocialFeedItem).sort((first, second) => {
+        if (first.featuredPinned !== second.featuredPinned) return first.featuredPinned ? -1 : 1;
+        return first.displayOrder - second.displayOrder;
+      })
+      : [];
+
+    renderSocialFeed(items);
+  } catch (error) {
+    console.error("Failed to load Social Feed:", error);
+    container.innerHTML = `
+      <article class="feed-card">
+        <div class="feed-body">
+          <p class="eyebrow">Connection issue</p>
+          <h3>We could not load the latest social updates right now.</h3>
+          <p>Please check back shortly.</p>
+        </div>
+      </article>
+    `;
+  } finally {
+    container.removeAttribute("aria-busy");
+  }
+}
+
+function renderSidebarItems(selector, items) {
+  const container = document.querySelector(selector);
+  if (!container) return;
+
+  container.innerHTML = items.map((item) => `
+    <article class="sidebar-item">
+      ${item.href ? `<a href="${escapeAttribute(item.href)}">${escapeHTML(item.title)}</a>` : `<strong>${escapeHTML(item.title)}</strong>`}
+      ${item.meta ? `<span>${escapeHTML(item.meta)}</span>` : ""}
+      ${item.description ? `<p>${escapeHTML(item.description)}</p>` : ""}
+    </article>
+  `).join("");
+  container.removeAttribute("aria-busy");
+}
+
+async function loadForYouSidebar() {
+  if (!document.querySelector(".for-you-page")) return;
+
+  renderSidebarItems("#for-you-events", [
+    { title: "Maasai Mara Migration Watch", meta: "Seasonal safari departures", description: "Private and small-group itineraries built around wildlife movement and guide availability." },
+    { title: "Coastal Heritage Weekend", meta: "Upcoming cultural escape", description: "A slower coast itinerary pairing Swahili heritage, food, and beach time." },
+    { title: "Community Market Day", meta: "Local experience", description: "Meet makers, hosts, and storytellers through Zipton's responsible tourism network." }
+  ]);
+
+  try {
+    const [toursResponse, articlesResponse, partnersResponse] = await Promise.all([
+      fetch(toursApiURL),
+      fetch(apiURL),
+      fetch(partnersApiURL)
+    ]);
+
+    const tours = toursResponse.ok ? await toursResponse.json() : [];
+    const articles = articlesResponse.ok ? await articlesResponse.json() : [];
+    const partners = partnersResponse.ok ? await partnersResponse.json() : [];
+
+    renderSidebarItems("#for-you-trending-tours", (Array.isArray(tours) ? tours.slice(0, 4) : []).map((post) => ({
+      title: stripHTML(post.title?.rendered),
+      href: `tour-detail.html?tour=${encodeURIComponent(post.slug || "")}`,
+      meta: getField(post, ["duration", "tour_duration", "location"]) || "Zipton Tours"
+    })));
+
+    renderSidebarItems("#for-you-latest-articles", (Array.isArray(articles) ? articles.slice(0, 4) : []).map((post) => ({
+      title: stripHTML(post.title?.rendered),
+      href: `single-post.html?id=${encodeURIComponent(post.id)}`,
+      meta: formatFeedDate(post.date)
+    })));
+
+    renderSidebarItems("#for-you-partners", (Array.isArray(partners) ? partners.slice(0, 4) : []).map((post) => ({
+      title: stripHTML(post.title?.rendered),
+      meta: getField(post, ["category", "partner_category"]) || "Featured partner",
+      description: getField(post, ["short_description", "description", "partner_description"]) || ""
+    })));
+  } catch (error) {
+    console.error("Failed to load For You sidebar:", error);
+  }
+}
+
+loadSocialFeed();
+loadForYouSidebar();
 
 const tourDetails = {
   "classic-safari-trail": {

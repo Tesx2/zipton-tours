@@ -629,6 +629,231 @@ h1 {
   background: var(--white);
 }
 
+.for-you-hero {
+  position: relative;
+  min-height: 58vh;
+  display: grid;
+  align-items: end;
+  overflow: hidden;
+}
+
+.for-you-hero .hero-overlay {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(30, 19, 10, 0.86));
+}
+
+.for-you-hero-content {
+  position: relative;
+  z-index: 1;
+  padding: 110px 0 62px;
+  color: var(--white);
+}
+
+.for-you-hero h1 {
+  max-width: 940px;
+  font-size: clamp(2.4rem, 7vw, 5.4rem);
+}
+
+.for-you-hero p:not(.eyebrow) {
+  max-width: 720px;
+  color: rgba(255, 255, 255, 0.86);
+  font-weight: 600;
+}
+
+.for-you-hub {
+  background:
+    linear-gradient(180deg, var(--background) 0%, var(--white) 42%),
+    var(--background);
+}
+
+.for-you-layout {
+  display: grid;
+  gap: 28px;
+  align-items: start;
+}
+
+.feed-column,
+.for-you-sidebar {
+  min-width: 0;
+}
+
+.social-feed-list,
+.for-you-sidebar,
+.sidebar-list {
+  display: grid;
+  gap: 18px;
+}
+
+.feed-card,
+.sidebar-panel {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 16px 42px rgba(74, 43, 31, 0.08);
+  overflow: hidden;
+}
+
+.feed-card {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.feed-card.pinned {
+  border-color: rgba(215, 155, 59, 0.68);
+  box-shadow: 0 20px 56px rgba(215, 155, 59, 0.16);
+}
+
+.feed-media {
+  min-height: 230px;
+  background: var(--background);
+}
+
+.feed-media img {
+  width: 100%;
+  height: 100%;
+  min-height: 230px;
+  object-fit: cover;
+}
+
+.feed-body {
+  display: grid;
+  gap: 14px;
+  padding: 24px;
+}
+
+.feed-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  color: rgba(91, 55, 22, 0.7);
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.platform-chip,
+.feed-pin {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: var(--background);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.platform-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.feed-body h3 {
+  margin-bottom: 0;
+  font-size: clamp(1.35rem, 3vw, 2rem);
+}
+
+.feed-body p {
+  color: rgba(91, 55, 22, 0.82);
+}
+
+.feed-link {
+  width: fit-content;
+}
+
+.sidebar-panel {
+  padding: 22px;
+}
+
+.sidebar-heading h2 {
+  margin-bottom: 0;
+  font-size: 1.35rem;
+}
+
+.sidebar-item {
+  display: grid;
+  gap: 4px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+
+.sidebar-item:first-child {
+  border-top: 0;
+}
+
+.sidebar-item a,
+.sidebar-item strong {
+  font-weight: 800;
+}
+
+.sidebar-item span,
+.sidebar-item p {
+  margin: 0;
+  color: rgba(91, 55, 22, 0.72);
+  font-size: 0.92rem;
+}
+
+.follow-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.follow-grid a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px;
+  background: var(--background);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-weight: 800;
+}
+
+.follow-grid img,
+.follow-badge {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+}
+
+.follow-badge {
+  display: inline-grid;
+  place-items: center;
+  color: var(--white);
+  background: #c4302b;
+  border-radius: 50%;
+  font-size: 0.62rem;
+  font-weight: 900;
+}
+
+.feed-loading {
+  padding: 24px;
+  gap: 14px;
+}
+
+.feed-loading-bar,
+.feed-loading-block,
+.feed-loading-line {
+  min-height: 18px;
+  background: linear-gradient(90deg, rgba(91, 55, 22, 0.08), rgba(215, 155, 59, 0.18), rgba(91, 55, 22, 0.08));
+  border-radius: 8px;
+  animation: feed-pulse 1.4s ease-in-out infinite;
+}
+
+.feed-loading-block {
+  min-height: 240px;
+}
+
+.feed-loading-line.short {
+  width: 62%;
+}
+
+@keyframes feed-pulse {
+  0%, 100% { opacity: 0.65; }
+  50% { opacity: 1; }
+}
+
 .section-header {
   text-align: center;
   margin-left: auto;
@@ -1581,6 +1806,19 @@ textarea {
 
   .tour-detail-layout {
     grid-template-columns: minmax(0, 1fr) 340px;
+  }
+
+  .for-you-layout {
+    grid-template-columns: minmax(0, 1fr) 340px;
+  }
+
+  .for-you-sidebar {
+    position: sticky;
+    top: 96px;
+  }
+
+  .feed-card {
+    grid-template-columns: minmax(240px, 0.48fr) minmax(0, 0.52fr);
   }
 
   .booking-panel {

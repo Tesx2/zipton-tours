@@ -1,4 +1,7 @@
 .sixth/
+.env
+.env.*
+!.env.example
 *.html.txt
 *.css.txt
 *.js.txt

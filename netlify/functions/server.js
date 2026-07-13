@@ -15,11 +15,16 @@ app.use(express.json({ limit: '10mb' })); // Increase limit for audio data
 
 const PORT = process.env.PORT || 3000;
 const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-1.5-flash";
 // Sanitize URL by removing potential trailing slash to prevent double slashes in fetch calls
 const WORDPRESS_URL = process.env.WORDPRESS_URL ? process.env.WORDPRESS_URL.replace(/\/$/, "") : "https://ziptontours.great-site.net";
 
 if (!NVIDIA_API_KEY) {
     console.warn("Backend Warning: NVIDIA_API_KEY is missing from environment variables.");
+}
+if (!GEMINI_API_KEY) {
+    console.warn("Backend Warning: GEMINI_API_KEY is missing from environment variables. Gemini chat will be skipped.");
 }
 if (!WORDPRESS_URL) {
     console.warn("Backend Warning: WORDPRESS_URL is missing from environment variables.");
@@ -27,6 +32,7 @@ if (!WORDPRESS_URL) {
 
 const NVIDIA_API_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
 const NVIDIA_ASR_URL = "https://integrate.api.nvidia.com/v1/audio/transcriptions";
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 // Cache variables to prevent hitting WP site on every request
 let cachedContext = null;
@@ -169,6 +175,102 @@ async function getWebsiteContent() {
     }
 }
 
+function toGeminiContents(messages) {
+    return messages
+        .filter((message) => message && message.role !== "system" && message.content)
+        .map((message) => ({
+            role: message.role === "assistant" ? "model" : "user",
+            parts: [{ text: String(message.content) }]
+        }));
+}
+
+function toChatCompletionResponse(text, provider = "gemini") {
+    return {
+        id: `${provider}-${Date.now()}`,
+        object: "chat.completion",
+        created: Math.floor(Date.now() / 1000),
+        model: provider === "gemini" ? GEMINI_MODEL : "meta/llama-3.1-70b-instruct",
+        provider,
+        choices: [
+            {
+                index: 0,
+                message: {
+                    role: "assistant",
+                    content: text || "I could not generate a response right now."
+                },
+                finish_reason: "stop"
+            }
+        ]
+    };
+}
+
+async function requestGemini(systemMessage, messages) {
+    if (!GEMINI_API_KEY) {
+        throw new Error("GEMINI_API_KEY is not configured.");
+    }
+
+    const response = await fetch(`${GEMINI_API_URL}?key=${encodeURIComponent(GEMINI_API_KEY)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            systemInstruction: {
+                parts: [{ text: systemMessage.content }]
+            },
+            contents: toGeminiContents(messages),
+            generationConfig: {
+                temperature: 0.5,
+                maxOutputTokens: 300
+            }
+        })
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        const error = new Error("Gemini API returned an error.");
+        error.status = response.status;
+        error.data = errorData;
+        throw error;
+    }
+
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts
+        ?.map((part) => part.text || "")
+        .join("")
+        .trim();
+
+    return toChatCompletionResponse(text, "gemini");
+}
+
+async function requestNvidia(systemMessage, messages) {
+    if (!NVIDIA_API_KEY) {
+        throw new Error("NVIDIA_API_KEY is not configured.");
+    }
+
+    const response = await fetch(NVIDIA_API_URL, {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${NVIDIA_API_KEY}`
+        },
+        body: JSON.stringify({
+            model: "meta/llama-3.1-70b-instruct",
+            messages: [systemMessage, ...messages],
+            temperature: 0.5,
+            max_tokens: 300
+        })
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        const error = new Error("NVIDIA API returned an error.");
+        error.status = response.status;
+        error.data = errorData;
+        throw error;
+    }
+
+    return response.json();
+}
+
 const router = express.Router();
 app.use('/.netlify/functions/server', router);
 app.use('/', router);
@@ -176,9 +278,9 @@ app.use('/', router);
 router.post('/api/chat', async (req, res) => {
     try {
         console.log('Function started for /api/chat');
-        if (!NVIDIA_API_KEY) {
-            console.error("NVIDIA_API_KEY is not configured.");
-            return res.status(500).json({ error: "NVIDIA_API_KEY is not configured on the server." });
+        if (!GEMINI_API_KEY && !NVIDIA_API_KEY) {
+            console.error("No AI provider API key is configured.");
+            return res.status(500).json({ error: "No AI provider API key is configured on the server." });
         }
 
         console.log('Fetching website content...');
@@ -222,31 +324,29 @@ router.post('/api/chat', async (req, res) => {
             4. Always encourage users to book or ask for contact details if they are asking about tours.`
         };
 
-        console.log('Sending request to NVIDIA API...');
-        const response = await fetch(NVIDIA_API_URL, {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${NVIDIA_API_KEY}`
-            },
-            body: JSON.stringify({
-                model: "meta/llama-3.1-70b-instruct", // or your preferred NVIDIA NIM model
-                messages: [systemMessage, ...messages],
-                temperature: 0.5,
-                max_tokens: 300
-            })
-        });
-        console.log('Received response from NVIDIA API. Status:', response.status);
+        const providers = GEMINI_API_KEY
+            ? [
+                { name: "Gemini", run: () => requestGemini(systemMessage, messages) },
+                { name: "NVIDIA", run: () => requestNvidia(systemMessage, messages) }
+            ]
+            : [
+                { name: "NVIDIA", run: () => requestNvidia(systemMessage, messages) }
+            ];
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            console.error('NVIDIA API returned error:', errorData);
-            return res.status(response.status).json(errorData);
+        let lastError = null;
+        for (const provider of providers) {
+            try {
+                console.log(`Sending request to ${provider.name} API...`);
+                const data = await provider.run();
+                console.log(`${provider.name} API data received successfully.`);
+                return res.json(data);
+            } catch (providerError) {
+                lastError = providerError;
+                console.error(`${provider.name} API error:`, providerError.data || providerError.message);
+            }
         }
 
-        const data = await response.json();
-        console.log('NVIDIA API data received successfully.');
-        res.json(data);
+        res.status(lastError?.status || 500).json(lastError?.data || { error: "All AI providers failed." });
     } catch (error) {
         console.error('Server Error in /api/chat:', error);
         res.status(500).json({ error: 'Internal Server Error' });
