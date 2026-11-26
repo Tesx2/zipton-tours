@@ -2399,3 +2399,10 @@ body.high-contrast {
     height: 50px;
   }
 }
+.hero .hero-media video {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+}
